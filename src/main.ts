@@ -5,24 +5,27 @@ import { Callback, Context, Handler } from 'aws-lambda';
 
 let server: Handler;
 
-async function bootstrap(): Promise<Handler> {
+// async function bootstrap(): Promise<Handler> {
+//   const app = await NestFactory.create(AppModule);
+//   await app.init();
+
+//   const expressApp = app.getHttpAdapter().getInstance();
+
+//   return serverlessExpress({ app: expressApp });
+// }
+
+// // 呼び出し
+// export const handler: Handler = async (
+//   event: any,
+//   context: Context,
+//   callback: Callback,
+// ) => {
+//   server = server ?? (await bootstrap());
+//   return server(event, context, callback);
+// };
+
+async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.init();
-
-  const expressApp = app.getHttpAdapter().getInstance();
-
-  return serverlessExpress({ app: expressApp });
-
-  // const PORT = parseInt(process.env.PORT) || 3000;
-  // await app.listen(PORT, () => console.log(`サーバー起動 ${PORT}`));
+  await app.listen(6000);
 }
-
-// 呼び出し
-export const handler: Handler = async (
-  event: any,
-  context: Context,
-  callback: Callback,
-) => {
-  server = server ?? (await bootstrap());
-  return server(event, context, callback);
-};
+bootstrap();
