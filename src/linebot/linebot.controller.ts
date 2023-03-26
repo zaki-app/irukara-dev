@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Post, Res, Logger } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
-import { WebhookEvent, WebhookRequestBody } from '@line/bot-sdk';
-import { Response } from 'express';
+import { WebhookRequestBody } from '@line/bot-sdk';
 @Controller('linebot')
 export class LineBotController {
   constructor(
@@ -35,7 +34,6 @@ export class LineBotController {
         // todo: 質問によって回答をchatGPTに回すかこっちでやるか判定したい
         const question = event.message.text ?? '質問がありません';
         console.log('質問', question);
-        console.log('.env見れるか？', process.env);
 
         // 質問からchatGPTの回答を得る
         const replyText = await this.lineBotService.chatGPTsAnswer(
