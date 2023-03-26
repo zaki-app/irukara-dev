@@ -1,11 +1,6 @@
 import { Body, Controller, Get, Post, Res, Logger } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
-import {
-  Client,
-  TextMessage,
-  WebhookEvent,
-  WebhookRequestBody,
-} from '@line/bot-sdk';
+import { WebhookEvent, WebhookRequestBody } from '@line/bot-sdk';
 import { Configuration, OpenAIApi } from 'openai';
 import { Response } from 'express';
 
