@@ -14,22 +14,24 @@ custom:
   otherfile:
     environment:
       dev: ${file(./env/dev.yml)}
+      stg: ${file(./env/stg.yml)}
       prd: ${file(./env/prd.yml)}
 
 functions:
   main:
     handler: dist/main.handler
-    name: ${self:provider.stage}-tap_note_sample
+    name: ${self:provider.stage}-tap_note
     description: '${self:provider.stage} tab noteのメイン関数(Nest.js)'
     environment: ${self:custom.otherfile.environment.${self:provider.stage}}
     runtime: nodejs16.x
     memorySize: 512
-    timeout: 10 #(m)
+    timeout: 30 #(m)
     tracing: PassThrough # awsの他のサービスを実行するときに、トレース情報を自動的に送信する
     events:
       - http:
+          method: ANY
           path: /
-          method: ANY
       - http:
-          path: '{proxy}'
           method: ANY
+          path: /{proxy+}
+          cors: true
