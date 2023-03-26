@@ -15,38 +15,47 @@ export class LineBotController {
   }
 
   @Post('webhook')
-  async requestLineBot(@Body() req: WebhookRequestBody, @Res() res: Response) {
+  async requestLineBot(@Body() req: WebhookRequestBody) {
     console.log('リクエスト', req);
     try {
       console.log('tryに入った');
-      const events: WebhookEvent[] = req.events;
-      events.map(async (event) => {
+      const events: any = req.events;
+      const results = events.map(async (event) => {
         // これがないとメッセージが取得できない
         if (event.type !== 'message' || event.message.type !== 'text') {
-          return null;
+          // テキスト以外の時は謝罪のメッセージを送信する
+          const replySorry = this.lineBotService.replySorry(event.message.type);
+          return this.lineBotService
+            .createLineBotClient()
+            .replyMessage(event.replyToken, {
+              type: 'text',
+              text: replySorry,
+            });
         }
+        // todo: 質問によって回答をchatGPTに回すかこっちでやるか判定したい
         const question = event.message.text ?? '質問がありません';
         console.log('質問', question);
         console.log('.env見れるか？', process.env);
 
         // 質問からchatGPTの回答を得る
-        const replyChatGPT = await this.lineBotService.chatGPTsAnswer(
+        const replyText = await this.lineBotService.chatGPTsAnswer(
           event.message.text,
         );
-        console.log('平文で来てるか？', replyChatGPT);
+        console.log('平文で来てるか？', replyText);
 
         const results = this.lineBotService
           .createLineBotClient()
           .replyMessage(event.replyToken, {
             type: 'text',
-            text: replyChatGPT,
+            text: replyText,
           });
         this.logger.log(`レスポンス: ${results}`);
-        return results;
+        // return results;
       });
+      return await Promise.all(results);
     } catch (err) {
       this.logger.error(`LineBotエラー: ${err}`);
-      res.sendStatus(500);
+      return err;
     }
   }
 }
