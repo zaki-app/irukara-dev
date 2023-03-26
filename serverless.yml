@@ -2,6 +2,7 @@ service: tap-note-dev
 
 plugins:
   - serverless-offline
+  - serverless-layers
 
 provider:
   name: aws
@@ -16,6 +17,16 @@ custom:
       dev: ${file(./env/dev.yml)}
       stg: ${file(./env/stg.yml)}
       prd: ${file(./env/prd.yml)}
+  serverless-layers:
+    layersDeploymentBucket: ${self:provider.stage}-linebot-layer
+
+# dist配下のみデプロイする
+package:
+  individually: true
+  include:
+    - dist/**
+  exclude:
+    - '**'
 
 functions:
   main:
