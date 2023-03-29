@@ -11,7 +11,7 @@ export const saveQuick = (event: any): QuickReplyItem[] => {
         text: '参考になったで保存',
         data: `{
           "userId": ${event.source.userId},
-          "data": ${event.message.text},
+          "answer": ${event.message.text},
           "reference": "true"
         }`,
       },
@@ -24,7 +24,7 @@ export const saveQuick = (event: any): QuickReplyItem[] => {
         text: '参考にならなかったで保存',
         data: `{
           "userId": ${event.source.userId},
-          "data": ${event.message.text},
+          "answer": ${event.message.text},
           "reference": "false"
         }`,
       },

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Res, Logger } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
-import { WebhookRequestBody } from '@line/bot-sdk';
+import { TextMessage, WebhookRequestBody } from '@line/bot-sdk';
 import { sorryQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
 import {
   fixedQuestions,
@@ -46,14 +46,14 @@ export class LineBotController {
         const fixedQ = fixedQuestions;
         if (fixedQ.includes(event.message.text)) {
           const fixedA = fixedAnswer(event.message.text);
-          const saveBtn = saveQuick(event);
-          return lineBotClient().replyMessage(event.replyToken, {
+          console.log('固定のやつ', fixedA);
+          const saveBtn = fixedA.id === 1 ? saveQuick(event) : '';
+          const textMsg: TextMessage = {
             type: 'text',
             text: fixedA.text,
-            quickReply: {
-              items: saveBtn ? saveBtn : [],
-            },
-          });
+          };
+          if (saveBtn) textMsg['quickReply'] = { items: saveBtn };
+          return lineBotClient().replyMessage(event.replyToken, textMsg);
         }
 
         // todo: 質問によって回答をchatGPTに回すかこっちでやるか判定したい
@@ -64,14 +64,13 @@ export class LineBotController {
         const replyText = await this.lineBotService.chatGPTsAnswer(
           event.message.text,
         );
-        console.log('平文で来てるか？', replyText);
 
-        const results = lineBotClient().replyMessage(event.replyToken, {
+        lineBotClient().replyMessage(event.replyToken, {
           type: 'text',
           text: replyText,
         });
 
-        this.logger.log(`レスポンス: ${results}`);
+        this.logger.log(`レスポンス: ${replyText}`);
       });
       return await Promise.all(results);
     } catch (err) {
