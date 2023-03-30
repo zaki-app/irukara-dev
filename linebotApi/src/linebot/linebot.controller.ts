@@ -68,6 +68,9 @@ export class LineBotController {
         lineBotClient().replyMessage(event.replyToken, {
           type: 'text',
           text: replyText,
+          quickReply: {
+            items: saveQuick(event),
+          },
         });
 
         this.logger.log(`レスポンス: ${replyText}`);
