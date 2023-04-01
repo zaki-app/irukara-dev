@@ -4,26 +4,48 @@ plugins:
   - serverless-offline
   - serverless-layers
   - serverless-dynamodb-local
-
+  - serverless-plugin-optimize
 provider:
   name: aws
   runtime: nodejs16.x
   region: ap-northeast-1
   stage: ${opt:stage, self:custom.defaultStage}
+  # IAM
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Action:
+            - 'dynamodb:DescribeTable'
+            - 'dynamodb:Query'
+            - 'dynamodb:Scan'
+            - 'dynamodb:GetItem'
+            - 'dynamodb:PutItem'
+            - 'dynamodb:UpdateItem'
+            - 'dynamodb:DeleteItem'
+          Resource: arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable
 
 custom:
-  defaultStage: local
+  defaultStage: dev
   otherfile:
     environment:
-      local: ${file(./env/local.yml)}
       dev: ${file(./env/dev.yml)}
       stg: ${file(./env/stg.yml)}
       prd: ${file(./env/prd.yml)}
   serverless-layers:
     layersDeploymentBucket: ${self:provider.stage}-linebot-layer
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    # exclude: aws-sdk
+    target: node16
+    define: 'require.resolve: undefined'
+    platform: node
+    concurrency: 10
   dynamodb:
     stages:
-      - local
+      - dev
     start:
       docker: true
       port: 8000
@@ -64,10 +86,10 @@ resources:
     DynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.stage}-messages # DynamoDBテーブル名
+        TableName: ${self:provider.stage}-MessageTable # DynamoDBテーブル名
         AttributeDefinitions:
           - AttributeName: messageId # PK
-            AttributeType: ID
+            AttributeType: S
           - AttributeName: createdAt # SK
             AttributeType: S
           # GS

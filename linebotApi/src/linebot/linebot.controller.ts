@@ -9,6 +9,9 @@ import {
 import { lineBotClient } from 'src/line/replyMessage/lineBotClient';
 import { sorryReply } from 'src/line/replyMessage/sorryReply';
 import { saveQuick } from 'src/line/quickReply.ts/saveQuick';
+import { DynamoDB } from 'src/dynamodb/client';
+import { v4 as uuidv4 } from 'uuid';
+import { nanoSecondFormat } from 'src/common/timeFormat';
 @Controller('linebot')
 export class LineBotController {
   constructor(
@@ -17,7 +20,12 @@ export class LineBotController {
   ) {}
 
   @Get()
-  getAccess() {
+  async getAccess() {
+    console.log('環境変数', process.env);
+    const datas = await new DynamoDB().getDatas();
+    console.log('dynamodbのデータ', datas);
+    console.log('uuid', uuidv4());
+    console.log('ナノ秒', nanoSecondFormat());
     return 'GETリクエストに変更';
   }
 
