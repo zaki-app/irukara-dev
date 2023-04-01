@@ -8,8 +8,6 @@ import { NestApplicationOptions } from '@nestjs/common';
 let server: Handler;
 
 async function bootstrap(): Promise<Handler> {
-  console.log('bootstrap呼ばれた');
-
   const options: NestApplicationOptions = {
     // bodyParser: false,
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
