@@ -5,13 +5,10 @@ import { Configuration, OpenAIApi } from 'openai';
 export class LineBotService {
   // chatGpt
   async chatGPTsAnswer(question: string) {
-    console.log('回答前の質問', question);
-
     const chatGPTConfig = new Configuration({
       apiKey: process.env.CHATGPT_API_KEYS,
     });
     const openAiApi = new OpenAIApi(chatGPTConfig);
-
     // 質問を投げる
     const setQuestion = await openAiApi.createChatCompletion({
       model: process.env.CHATGPT_MODEL,
@@ -29,12 +26,12 @@ export class LineBotService {
         {
           role: 'system',
           content:
-            'あなたは「TapNote」です。名前を聞かれたらTapNoteって答えてください。TapNoteは現在テスト段階ですが、TapNoteのプロフィールをカスタマイズできるアシスタントになる予定です。まだまだ未熟者ですが、がんばっていきますので温かい目で見守ってくれると嬉しいですって答えてください',
+            'あなたは「TapNote」です。名前を聞かれたらTapNoteって答えてください。TapNoteは現在テスト段階ですが、回答を参考になった、ならなかったで分けて保存できます。まだまだ未熟者ですが、がんばっていきますので温かい目で見守ってくれると嬉しいですって答えてください',
         },
         {
           role: 'system',
           content:
-            'あなたはAIアシスタントですが、そこまで丁寧じゃなくてもいいです。親しみやすい感じで話してください',
+            'あなたはAIアシスタントですが、そこまで丁寧じゃなくてもいいです。親しみやすい感じで完結に答えてください',
         },
         {
           role: 'system',
@@ -48,22 +45,7 @@ export class LineBotService {
         {
           role: 'system',
           content:
-            '回答は完結にしてください。長くなりそうなら分割して続きを再度送ってください',
-        },
-        {
-          role: 'system',
-          content:
             'ありがとうって言われたり感謝されたら絵文字を入れて喜んでください',
-        },
-        {
-          role: 'system',
-          content:
-            '自己紹介は、TapNoteは現在テスト段階ですが、TapNoteのプロフィールをカスタマイズできるアシスタントになる予定です。まだまだ未熟者ですが、がんばっていきますので温かい目で見守ってくれると嬉しいですって答えてくださいって答えてね',
-        },
-        {
-          role: 'system',
-          content:
-            'TapNoteのことを聞かれたらTapNoteは現在テスト段階ですが、TapNoteのプロフィールをカスタマイズできるアシスタントになる予定です。まだまだ未熟者ですが、がんばっていきますので温かい目で見守ってくれると嬉しいですって答えてくださいって答えてね',
         },
         {
           role: 'user',

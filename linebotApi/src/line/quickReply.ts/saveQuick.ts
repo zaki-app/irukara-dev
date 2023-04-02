@@ -1,32 +1,46 @@
 /* eslint-disable prettier/prettier */
 import { QuickReplyItem } from '@line/bot-sdk';
+import { v4 as uuidv4 } from 'uuid';
 
-export const saveQuick = (event: any): QuickReplyItem[] => {
-  return [
+type QuickReplyData = {
+  userId: string;
+  question: string;
+  answer: string;
+  createdAt: number;
+};
+
+/**
+ * 回答返信後に表示する保存クイックリプライ
+ * @param event
+ * @param text
+ * @returns
+ */
+export const saveQuick = async (
+  event: any,
+  text?: string,
+): Promise<QuickReplyItem[]> => {
+  console.log('回答を送れるか？', event, text);
+
+  const params: QuickReplyItem[] = [
+    /**
+     * TODO 今後、参考になったならなかったボタンを設置するのでreferenceは残す
+     */
     {
       type: 'action',
       action: {
         type: 'postback',
-        label: '参考になったで保存',
-        text: '参考になったで保存',
-        data: `{
-          "userId": ${event.source.userId},
-          "answer": ${event.message.text},
-          "reference": "true"
-        }`,
-      },
-    },
-    {
-      type: 'action',
-      action: {
-        type: 'postback',
-        label: '参考にならなかったで保存',
-        text: '参考にならなかったで保存',
-        data: `{
-          "userId": ${event.source.userId},
-          "answer": ${event.message.text},
-          "reference": "false"
-        }`,
+        label: '保存する',
+        // dataは最大300文字の制限あり
+        data: JSON.stringify({
+          messageId: uuidv4(),
+          userId: event.source.userId,
+          question: event.message.text,
+          // answer: text,
+          reference: 1,
+          memberStatus: 0,
+          createdAt: event.timestamp,
+          updatedAt: 0,
+        }),
       },
     },
     {
@@ -38,4 +52,6 @@ export const saveQuick = (event: any): QuickReplyItem[] => {
       },
     },
   ];
+
+  return await Promise.all(params);
 };

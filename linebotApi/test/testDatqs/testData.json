@@ -1,10 +1,10 @@
 {
-  "messageId": "486f47d2-e623-4d29-a891-3d1f3a1fda69",
-  "userId": "reoelanfeoareoreure3fjei",
-  "question": "今日はいい天気だね",
-  "answer": "そうですね。とてもいい天気です😋",
-  "reference": "1",
-  "memberStatus": "2",
-  "createdAt": "2023-04-01T10:41:56.480480480Z",
-  "updatedAt": "2023-04-01T10:41:56.480480480Z"
+  "messageId": "659bfb27-1839-4b9b-843a-77a160463f2c",
+  "userId": "Uca3b754636bb1df2fdee8f0e8347c40c",
+  "question": "こんにちは",
+  "answer": "こんにちは！TapNoteです。何かお困りのことはありますか？お手伝いできることがあれば、遠慮なくおっしゃってくださいね。😊",
+  "reference": 1,
+  "memberStatus": 0,
+  "createdAt": 1680401370570,
+  "updatedAt": 1680401370570
 }
