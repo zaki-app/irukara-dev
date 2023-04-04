@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res, Logger } from '@nestjs/common';
+import { Body, Controller, Get, Post, Logger } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
 import { TextMessage, WebhookRequestBody } from '@line/bot-sdk';
 import { sorryQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
@@ -91,6 +91,13 @@ export class LineBotController {
         const replyText = await this.lineBotService.chatGPTsAnswer(
           event.message.text,
         );
+
+        // 一度、回答をサブテーブルに保存する
+        const subSave = await new ProcessingInDynamo().createAnswer(
+          event,
+          replyText,
+        );
+        console.log('回答テーブル', subSave);
 
         console.log('回答', replyText);
         const quickItems = await saveQuick(event, replyText);
