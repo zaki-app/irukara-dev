@@ -11,7 +11,8 @@ export const sorryReply = (event: any) => {
     const parseData = event.postback.data;
     const result = JSON.parse(parseData);
     console.log('ポストバックの結果', parseData.action);
-    return `ポストバックです！ ${result.action}`;
+    // return `ポストバックです！ ${result.action}`;
+    return;
   } else if (
     event.message.type === 'image' ||
     event.message.type === 'video' ||
