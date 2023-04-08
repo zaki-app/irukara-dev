@@ -32,15 +32,9 @@ export const saveQuick = async (
         label: '保存する',
         // dataは最大300文字の制限あり
         data: JSON.stringify({
-          // このメッセージIDをAnswerTableのanswerIdと一緒にする
-          messageId: event.replyToken,
-          userId: event.source.userId,
-          question: event.message.text,
-          // answer: text,
+          // 保存は1なのでreferenceを1にして送る
           reference: 1,
-          memberStatus: 0,
-          createdAt: event.timestamp,
-          updatedAt: 0,
+          replyToken: event.replyToken,
         }),
       },
     },

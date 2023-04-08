@@ -46,10 +46,17 @@ export class LineBotController {
           if (event.type === 'postback') {
             console.log('postbackの処理', event.postback.data);
             // dynamodbへの保存処理へ
-            const saveData = await new ProcessingInDynamo().createMessage(
-              event,
+            // replyTokenから取得
+            const data = await new ProcessingInDynamo().getMessageId(
+              event.postback.data.replyToken,
             );
-            console.log('渡ってきた保存データ', saveData);
+
+            console.log('取得したレコード', data);
+
+            // const saveData = await new ProcessingInDynamo().createMessage(
+            //   event,
+            // );
+            // console.log('渡ってきた保存データ', saveData);
           }
 
           /**
@@ -92,8 +99,8 @@ export class LineBotController {
           event.message.text,
         );
 
-        // 一度、回答をサブテーブルに保存する
-        const subSave = await new ProcessingInDynamo().createAnswer(
+        // 一度、回答をdynamodbに保存する
+        const subSave = await new ProcessingInDynamo().createMessage(
           event,
           replyText,
         );
