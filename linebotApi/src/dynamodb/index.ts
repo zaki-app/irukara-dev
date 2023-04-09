@@ -1,7 +1,6 @@
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import {
   DynamoDBClient,
-  GetItemCommand,
   ScanCommand,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
@@ -13,7 +12,7 @@ type SaveAnswerType = {
   userId: string;
   question: string;
   answer: string;
-  reference: number;
+  referenceType: number;
   memberStatus: number;
   createdAt: number;
 };
@@ -21,7 +20,7 @@ type SaveAnswerType = {
 // dynamodbで何か処理が必要になった時のクラス
 export class ProcessingInDynamo {
   // dynamodb設定
-  dynamoDB = process.env.IS_OFFLINE
+  private readonly dynamoDB = process.env.IS_OFFLINE
     ? new DynamoDBClient({
         region: 'localhost',
         endpoint: process.env.DYNAMODB_ENDPOINT,
@@ -30,7 +29,10 @@ export class ProcessingInDynamo {
         region: process.env.REGION,
       });
 
-  // 全てのデータを取得する
+  /**
+   * 全てのデータを取得する
+   * @returns string
+   */
   async getDatas(): Promise<any> {
     try {
       const { Items } = await this.dynamoDB.send(
@@ -38,7 +40,6 @@ export class ProcessingInDynamo {
           TableName: process.env.DYNAMODB_TABLE_NAME,
         }),
       );
-      console.log('GETアイテム', Items);
       // dynamoのJSONから通常のJSONに変換する
       const newItems = Items.map((item) => unmarshall(item));
       return newItems;
@@ -49,31 +50,60 @@ export class ProcessingInDynamo {
   }
 
   /**
-   * リプライトークンから保存するレコードを取得
+   * 保存時の処理
+   * リプライトークンから該当レコードのreferenceTypeを更新する
+   * 1 参考になった 2 参考にならなかった 0 保存しないor何もしてない
+   * @param replyToken
+   * @returns
    */
-  async getMessageId(replyToken: string) {
-    //ここで得た回答を元にメインテーブルに保存する
+  async updateMessage(event: string) {
+    let response;
     try {
+      console.log('update event...', event);
+      const body = JSON.parse(event);
+
       const params = {
-        TableName: process.env.DYNAMODB_TABLE_NAME,
-        Key: marshall({
-          messageId: replyToken,
-        }),
+        TransactItems: [
+          {
+            Update: {
+              TableName: process.env.DYNAMODB_TABLE_NAME,
+              Key: {
+                messageId: { S: body.replyToken },
+                createdAt: { N: body.createdAt },
+              },
+              UpdateExpression: 'SET referenceType = :value',
+              ExpressionAttributeValues: {
+                ':value': { N: body.referenceType },
+              },
+            },
+          },
+        ],
       };
 
-      console.log('パラメーター', params);
+      const command = new TransactWriteItemsCommand(params);
 
-      const { Item } = await this.dynamoDB.send(new GetItemCommand(params));
-      new Logger.log('レコード取得レスポンス', Item);
-      return JSON.stringify({
-        message: `${replyToken}のデータ取得成功`,
-        data: Item ? unmarshall(Item) : 'データがありません',
-      });
+      try {
+        response = await this.dynamoDB.send(command);
+        response.body = body;
+      } catch (err) {
+        response.body = JSON.stringify({
+          message: 'Faild to Update...',
+          errorMsg: err.message,
+          errorStack: err.errorStack,
+        });
+      }
     } catch (err) {
-      new Logger.error('レコード取得エラー', err);
+      new Logger.error('レコード更新エラー', err);
+      response.body = JSON.stringify({
+        message: 'dynamodb以外でエラー',
+        errorMsg: err.message,
+        errorStack: err.errorStack,
+      });
     }
-  }
 
+    new Logger().log('更新レスポンス', response);
+    return response;
+  }
   /**
    * 質問と回答を保存する
    * @param event
@@ -89,7 +119,7 @@ export class ProcessingInDynamo {
         userId: event.source.userId,
         question: event.message.text,
         answer: replayText,
-        reference: 0,
+        referenceType: 0,
         memberStatus: 0,
         createdAt: event.timestamp,
       };
@@ -125,45 +155,38 @@ export class ProcessingInDynamo {
     }
   }
 
-  /**
-   * postbackで来た時の保存処理
-   */
-  // async createMessage(event: any): Promise<any> {
-  //   try {
-  //     const params = JSON.parse(event.postback.data);
+  async deleteMessage(messageId: string) {
+    let response;
+    try {
+      const params = {
+        TransactItems: [
+          {
+            Delete: {
+              TableName: process.env.DYNAMODB_TABLE_NAME,
+              Key: marshall({
+                messageId: messageId,
+              }),
+            },
+          },
+        ],
+      };
 
-  //     // console.log('保存データ', params);
-  //     // // 残りの必要な項目を追加する
-  //     // params['messageId'] = uuidv4();
-  //     // params['reference'] = 1;
-  //     // params['memberStatus'] = 0;
+      const deleteResult = await this.dynamoDB.send(
+        new TransactWriteItemsCommand(params),
+      );
+      response.body = JSON.stringify({
+        message: 'DELETE Successfully!!',
+        deleteResult,
+      });
+    } catch (err) {
+      response.statusCode = 500;
+      response.body = JSON.stringify({
+        message: 'Failed to DELETE...',
+        errorMsg: err.message,
+        errorStack: err.errorStack,
+      });
+    }
 
-  //     const transactItem = {
-  //       // トランザクション用のparams
-  //       TransactItems: [
-  //         {
-  //           Put: {
-  //             TableName: process.env.DYNAMODB_TABLE_NAME,
-  //             Item: marshall(params || {}),
-  //           },
-  //         },
-  //       ],
-  //     };
-
-  //     console.log('トランザクション', transactItem);
-
-  //     const createTransact = await this.dynamoDB.send(
-  //       new TransactWriteItemsCommand(transactItem),
-  //     );
-
-  //     // レスポンスに保存データを含める
-  //     createTransact['data'] = params;
-
-  //     console.log('レスポンス', createTransact);
-  //     return createTransact;
-  //   } catch (err) {
-  //     new Logger().error('ロッガーエラー', err);
-  //     throw new InternalServerErrorException(err);
-  //   }
-  // }
+    return response;
+  }
 }

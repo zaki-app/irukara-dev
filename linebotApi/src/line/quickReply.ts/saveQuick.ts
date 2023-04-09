@@ -1,13 +1,5 @@
 /* eslint-disable prettier/prettier */
 import { QuickReplyItem } from '@line/bot-sdk';
-import { v4 as uuidv4 } from 'uuid';
-
-type QuickReplyData = {
-  userId: string;
-  question: string;
-  answer: string;
-  createdAt: number;
-};
 
 /**
  * 回答返信後に表示する保存クイックリプライ
@@ -32,18 +24,23 @@ export const saveQuick = async (
         label: '保存する',
         // dataは最大300文字の制限あり
         data: JSON.stringify({
-          // 保存は1なのでreferenceを1にして送る
-          reference: 1,
+          // 保存は1なのでreferenceTypeを1にして送る
           replyToken: event.replyToken,
+          referenceType: 1,
+          createdAt: event.timestamp,
         }),
       },
     },
     {
       type: 'action',
       action: {
-        type: 'message',
+        type: 'postback',
         label: '保存しない',
-        text: '保存しない',
+        data: JSON.stringify({
+          replyToken: event.replyToken,
+          referenceType: 3,
+          createdAt: event.timestamp,
+        }),
       },
     },
   ];

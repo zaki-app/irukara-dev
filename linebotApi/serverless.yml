@@ -132,7 +132,7 @@ resources:
               ProjectionType: ALL # 射影される属性
           - IndexName: referenceIndex
             KeySchema:
-              - AttributeName: reference
+              - AttributeName: referenceType
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性
@@ -156,6 +156,8 @@ resources:
           # GS
           - AttributeName: userId
             AttributeType: S
+          - AttributeName: referenceType
+            AttributeType: N
         KeySchema:
           - AttributeName: answerId
             KeyType: HASH
@@ -166,6 +168,10 @@ resources:
           - IndexName: userIdIndex
             KeySchema:
               - AttributeName: userId
+                KeyType: HASH
+          - IndexName: referenceTypeIndex
+            KeySchema:
+              - AttributeName: referenceType
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性
