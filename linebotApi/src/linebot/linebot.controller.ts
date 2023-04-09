@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Logger } from '@nestjs/common';
+import { Body, Controller, Get, Post, Logger, Put } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
 import { TextMessage, WebhookRequestBody } from '@line/bot-sdk';
 import { sorryQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
@@ -22,11 +22,11 @@ export class LineBotController {
 
   @Get()
   async getAccess() {
-    console.log('環境変数', process.env);
-    const datas = await new ProcessingInDynamo().getDatas();
-    console.log('dynamodbのデータ', datas);
-    console.log('uuid', uuidv4());
-    console.log('ナノ秒', nanoSecondFormat());
+    // console.log('環境変数', process.env);
+    // const datas = await new ProcessingInDynamo().getDatas();
+    // console.log('dynamodbのデータ', datas);
+    // console.log('uuid', uuidv4());
+    // console.log('ナノ秒', nanoSecondFormat());
     return 'GETリクエストに変更';
   }
 
@@ -40,23 +40,15 @@ export class LineBotController {
         console.log('イベント', event);
 
         if (event.type !== 'message' || event.message.type !== 'text') {
-          /**
-           * postbackで来た時は保存処理に移る
-           */
+          // referenceTypeの値によって保存か削除か分かれる
           if (event.type === 'postback') {
-            console.log('postbackの処理', event.postback.data);
-            // dynamodbへの保存処理へ
-            // replyTokenから取得
-            const data = await new ProcessingInDynamo().getMessageId(
-              event.postback.data.replyToken,
+            console.log('postbackの処理', event.postback);
+            // dynamodb更新処理へ
+            const data = await new ProcessingInDynamo().updateMessage(
+              event.postback.data,
             );
 
-            console.log('取得したレコード', data);
-
-            // const saveData = await new ProcessingInDynamo().createMessage(
-            //   event,
-            // );
-            // console.log('渡ってきた保存データ', saveData);
+            console.log('更新レコード', data);
           }
 
           /**
@@ -100,17 +92,9 @@ export class LineBotController {
         );
 
         // 一度、回答をdynamodbに保存する
-        const subSave = await new ProcessingInDynamo().createMessage(
-          event,
-          replyText,
-        );
-        console.log('回答テーブル', subSave);
+        await new ProcessingInDynamo().createMessage(event, replyText);
 
-        console.log('回答', replyText);
         const quickItems = await saveQuick(event, replyText);
-        // ここでクイックリプライが返ってこない
-        console.log('クイックリプライ', quickItems);
-        console.log('クイックリプライの次');
 
         const textMessage: TextMessage = {
           type: 'text',
@@ -143,5 +127,13 @@ export class LineBotController {
       this.logger.error(`LineBotエラー: ${err}`);
       return err;
     }
+  }
+
+  @Put('webhook')
+  async putData(@Body() req) {
+    console.log('更新リクエスト', req);
+    const result = await new ProcessingInDynamo().updateMessage(req);
+    console.log('更新の結果', result);
+    return result;
   }
 }
