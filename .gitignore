@@ -36,3 +36,4 @@ lerna-debug.log*
 .serverless
 env*
 docker/dynamodb/*
+csv-data

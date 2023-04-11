@@ -5,6 +5,7 @@ import {
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { nanoSecondFormat } from 'src/common/timeFormat';
 
 // 型定義
 type SaveAnswerType = {
@@ -15,6 +16,26 @@ type SaveAnswerType = {
   referenceType: number;
   memberStatus: number;
   createdAt: number;
+};
+
+type UpdateReferenceType = {
+  replyToken: string;
+  referenceType: string;
+  createdAt: number;
+};
+
+type DynamodbUpdateTransactType = {
+  TransactItems: [
+    Update: {
+      TableName: string;
+      Key: {
+        messageId: string;
+        createdAt: string;
+      };
+      UpdateExpression: string;
+      ExpressionAttributeValues: string;
+    },
+  ];
 };
 
 // dynamodbで何か処理が必要になった時のクラス
@@ -56,11 +77,14 @@ export class ProcessingInDynamo {
    * @param replyToken
    * @returns
    */
-  async updateMessage(event: string) {
-    let response;
+
+  async updateMessage(event) {
+    let response: any;
+    console.log('イベント', event);
     try {
-      console.log('update event...', event);
       const body = JSON.parse(event);
+      console.log('ボディ', body);
+      body.updatedAt = nanoSecondFormat();
 
       const params = {
         TransactItems: [
@@ -68,23 +92,37 @@ export class ProcessingInDynamo {
             Update: {
               TableName: process.env.DYNAMODB_TABLE_NAME,
               Key: {
-                messageId: { S: body.replyToken },
-                createdAt: { N: body.createdAt },
+                messageId: { S: body.messageId },
+                createdAt: { N: String(body.createdAt) },
               },
-              UpdateExpression: 'SET referenceType = :value',
+              // Key: marshall({
+              //   messageId: body.messageId,
+              //   createdAt: body.createdAt,
+              // }),
+              UpdateExpression:
+                'SET referenceType = :value1, updatedAt = :value2',
               ExpressionAttributeValues: {
-                ':value': { N: body.referenceType },
+                ':value1': { N: String(body.referenceType) },
+                ':value2': { S: body.updatedAt },
               },
             },
           },
         ],
       };
 
+      params.TransactItems.forEach((item) => {
+        console.log('更新パラムス', item.Update);
+        console.log('ここで取得できるか？', body.messageId);
+      });
+
       const command = new TransactWriteItemsCommand(params);
 
       try {
+        console.log('tryに入った');
         response = await this.dynamoDB.send(command);
-        response.body = body;
+        console.log('bodyをつける前', response);
+        response.body = JSON.stringify(body);
+        console.log('body追加後', response);
       } catch (err) {
         response.body = JSON.stringify({
           message: 'Faild to Update...',
@@ -111,7 +149,6 @@ export class ProcessingInDynamo {
    * @returns
    */
   async createMessage(event: any, replayText: string): Promise<any> {
-    console.log('回答保存テーブル', this.dynamoDB.config.endpoint);
     try {
       // 保存する項目
       const params: SaveAnswerType = {
