@@ -44,11 +44,21 @@ export class LineBotController {
           if (event.type === 'postback') {
             console.log('postbackの処理', event.postback);
             // dynamodb更新処理へ
-            const data = await new ProcessingInDynamo().updateMessage(
+            const updateResult = await new ProcessingInDynamo().updateMessage(
               event.postback.data,
             );
-
-            console.log('更新レコード', data);
+            console.log('更新結果', updateResult.body.referenceType);
+            // referenceの値によって返信するメッセージを変更
+            const postbackMessage =
+              updateResult.body.referenceType === 1
+                ? '保存しました😋'
+                : '保存しませんでした🌀';
+            const textMessage: TextMessage = {
+              type: 'text',
+              text: postbackMessage,
+            };
+            console.log('どうなってる？？', textMessage);
+            return lineBotClient().replyMessage(event.replyToken, textMessage);
           }
 
           /**
@@ -67,9 +77,6 @@ export class LineBotController {
 
         // 固定の質問が来た時
         // ちょいとテスト
-        if (event.message.text.includes('保存')) {
-          return;
-        }
         const fixedQ = fixedQuestions;
         if (fixedQ.includes(event.message.text)) {
           const fixedA = fixedAnswer(event.message.text);
@@ -110,14 +117,6 @@ export class LineBotController {
           event.replyToken,
           textMessage,
         );
-
-        // return await lineBotClient().replyMessage(event.replyToken, {
-        //   type: 'text',
-        //   text: replyText,
-        //   quickReply: {
-        //     items: quickItems,
-        //   },
-        // });
       });
       const response = await Promise.all(results);
       this.logger.log('最後のレスポンス', response);

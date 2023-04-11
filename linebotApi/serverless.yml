@@ -24,16 +24,16 @@ provider:
             - 'dynamodb:UpdateItem'
             - 'dynamodb:DeleteItem'
           Resource: arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable
-        - Effect: 'Allow'
-          Action:
-            - 'dynamodb:DescribeTable'
-            - 'dynamodb:Query'
-            - 'dynamodb:Scan'
-            - 'dynamodb:GetItem'
-            - 'dynamodb:PutItem'
-            - 'dynamodb:UpdateItem'
-            - 'dynamodb:DeleteItem'
-          Resource: arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-AnswerTable
+        # - Effect: 'Allow'
+        #   Action:
+        #     - 'dynamodb:DescribeTable'
+        #     - 'dynamodb:Query'
+        #     - 'dynamodb:Scan'
+        #     - 'dynamodb:GetItem'
+        #     - 'dynamodb:PutItem'
+        #     - 'dynamodb:UpdateItem'
+        #     - 'dynamodb:DeleteItem'
+        #   Resource: arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-AnswerTable
 
 custom:
   defaultStage: dev
@@ -82,9 +82,9 @@ functions:
       CHATGPT_API_KEYS: ${self:custom.otherfile.environment.${self:provider.stage}.CHATGPT_API_KEYS}
       CHATGPT_MODEL: ${self:custom.otherfile.environment.${self:provider.stage}.CHATGPT_MODEL}
       REGION: ${self:custom.otherfile.environment.${self:provider.stage}.REGION}
-      DYNAMODB_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ENDPOINT}
+      # DYNAMODB_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ENDPOINT}
       DYNAMODB_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_TABLE_NAME}
-      DYNAMODB_ANSWER_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ANSWER_TABLE_NAME}
+      # DYNAMODB_ANSWER_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ANSWER_TABLE_NAME}
     runtime: nodejs16.x
     memorySize: 512
     timeout: 30 #(m)
@@ -113,7 +113,7 @@ resources:
           # GS
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: reference
+          - AttributeName: referenceType
             AttributeType: N
           - AttributeName: memberStatus
             AttributeType: N
@@ -139,39 +139,6 @@ resources:
           - IndexName: memberStatusIndex
             KeySchema:
               - AttributeName: memberStatus
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-        # オンデマンドモードを指定
-        BillingMode: PAY_PER_REQUEST
-    AnswerTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.stage}-AnswerTable # DynamoDBテーブル名
-        AttributeDefinitions:
-          - AttributeName: answerId # PK
-            AttributeType: S
-          - AttributeName: createdAt # SK
-            AttributeType: N
-          # GS
-          - AttributeName: userId
-            AttributeType: S
-          - AttributeName: referenceType
-            AttributeType: N
-        KeySchema:
-          - AttributeName: answerId
-            KeyType: HASH
-          - AttributeName: createdAt
-            KeyType: RANGE
-        # GSの設定
-        GlobalSecondaryIndexes:
-          - IndexName: userIdIndex
-            KeySchema:
-              - AttributeName: userId
-                KeyType: HASH
-          - IndexName: referenceTypeIndex
-            KeySchema:
-              - AttributeName: referenceType
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性

@@ -17,6 +17,7 @@ export const saveQuick = async (
     /**
      * TODO 今後、参考になったならなかったボタンを設置するのでreferenceは残す
      */
+    // 保存は1, 保存しないは3に更新する, 何もしていないは0
     {
       type: 'action',
       action: {
@@ -24,8 +25,7 @@ export const saveQuick = async (
         label: '保存する',
         // dataは最大300文字の制限あり
         data: JSON.stringify({
-          // 保存は1なのでreferenceTypeを1にして送る
-          replyToken: event.replyToken,
+          messageId: event.replyToken,
           referenceType: 1,
           createdAt: event.timestamp,
         }),
@@ -37,7 +37,7 @@ export const saveQuick = async (
         type: 'postback',
         label: '保存しない',
         data: JSON.stringify({
-          replyToken: event.replyToken,
+          messageId: event.replyToken,
           referenceType: 3,
           createdAt: event.timestamp,
         }),
