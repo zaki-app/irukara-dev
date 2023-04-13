@@ -10,8 +10,6 @@ import { lineBotClient } from 'src/line/replyMessage/lineBotClient';
 import { sorryReply } from 'src/line/replyMessage/sorryReply';
 import { saveQuick } from 'src/line/quickReply.ts/saveQuick';
 import { ProcessingInDynamo } from 'src/dynamodb';
-import { v4 as uuidv4 } from 'uuid';
-import { nanoSecondFormat } from 'src/common/timeFormat';
 
 @Controller('linebot')
 export class LineBotController {
@@ -22,22 +20,16 @@ export class LineBotController {
 
   @Get()
   async getAccess() {
-    // console.log('環境変数', process.env);
-    // const datas = await new ProcessingInDynamo().getDatas();
-    // console.log('dynamodbのデータ', datas);
-    // console.log('uuid', uuidv4());
-    // console.log('ナノ秒', nanoSecondFormat());
     return 'GETリクエストに変更';
   }
 
   @Post('webhook')
   async requestLineBot(@Body() req: WebhookRequestBody) {
-    // console.log('リクエスト', req);
     try {
       const events: any = req.events;
 
       const results = events.map(async (event) => {
-        console.log('イベント', event);
+        this.logger.log('event...', event);
 
         if (event.type !== 'message' || event.message.type !== 'text') {
           // referenceTypeの値によって保存か削除か分かれる
@@ -47,7 +39,6 @@ export class LineBotController {
             const updateResult = await new ProcessingInDynamo().updateMessage(
               event.postback.data,
             );
-            console.log('更新結果', updateResult.body.referenceType);
             // referenceの値によって返信するメッセージを変更
             const postbackMessage =
               updateResult.body.referenceType === 1
@@ -57,7 +48,6 @@ export class LineBotController {
               type: 'text',
               text: postbackMessage,
             };
-            console.log('どうなってる？？', textMessage);
             return lineBotClient().replyMessage(event.replyToken, textMessage);
           }
 
