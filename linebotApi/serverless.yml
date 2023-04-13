@@ -82,7 +82,7 @@ functions:
       CHATGPT_API_KEYS: ${self:custom.otherfile.environment.${self:provider.stage}.CHATGPT_API_KEYS}
       CHATGPT_MODEL: ${self:custom.otherfile.environment.${self:provider.stage}.CHATGPT_MODEL}
       REGION: ${self:custom.otherfile.environment.${self:provider.stage}.REGION}
-      # DYNAMODB_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ENDPOINT}
+      DYNAMODB_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ENDPOINT}
       DYNAMODB_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_TABLE_NAME}
       # DYNAMODB_ANSWER_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ANSWER_TABLE_NAME}
     runtime: nodejs16.x

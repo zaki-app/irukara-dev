@@ -91,20 +91,24 @@ export class ProcessingInDynamo {
           {
             Update: {
               TableName: process.env.DYNAMODB_TABLE_NAME,
-              Key: {
-                messageId: { S: body.messageId },
-                createdAt: { N: String(body.createdAt) },
-              },
-              // Key: marshall({
-              //   messageId: body.messageId,
-              //   createdAt: body.createdAt,
-              // }),
+              // Key: {
+              //   messageId: { S: body.messageId },
+              //   createdAt: { N: String(body.createdAt) },
+              // },
+              Key: marshall({
+                messageId: body.messageId,
+                createdAt: body.createdAt,
+              }),
               UpdateExpression:
                 'SET referenceType = :value1, updatedAt = :value2',
-              ExpressionAttributeValues: {
-                ':value1': { N: String(body.referenceType) },
-                ':value2': { S: body.updatedAt },
-              },
+              // ExpressionAttributeValues: {
+              //   ':value1': { N: String(body.referenceType) },
+              //   ':value2': { S: body.updatedAt },
+              // },
+              ExpressionAttributeValues: marshall({
+                ':value1': body.referenceType,
+                ':value2': body.updatedAt,
+              }),
             },
           },
         ],
@@ -121,7 +125,7 @@ export class ProcessingInDynamo {
         console.log('tryに入った');
         response = await this.dynamoDB.send(command);
         console.log('bodyをつける前', response);
-        response.body = JSON.stringify(body);
+        response['body'] = body;
         console.log('body追加後', response);
       } catch (err) {
         response.body = JSON.stringify({
