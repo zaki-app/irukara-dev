@@ -1,0 +1,28 @@
+data: '{
+  "messages":[
+    {
+      "type":"text",
+      "text":"GraphQLは、Facebookが開発したAPIクエリ言語で、RESTful APIの代替として使われます。GraphQLは、クライアントが必要なデータを明示的に指定できるため、オーバーフェッチやアンダーフェッチの問題を解決することができます。また、GraphQLは、複数のデータソースからデータを取得することができるため、マイクロサービスアーキテクチャに適しています。GraphQLは、スキーマ定義言語としても機能し、APIのドキュメントを自動生成することができます。",
+      "quickReply":{
+        "items":[
+          {
+            "type":"action",
+            "action":{
+              "type":"postback",
+              "label":"保存する",
+              "data":
+                "{\\"userId\\":\\"Uca3b754636bb1df2fdee8f0e8347c40c\\",\\"question\\":\\"graphqlについて基本的なことを教えて欲しい\\",\\"answer\\":\\"GraphQLは、Facebookが開発したAPIクエリ言語で、RESTful APIの代替として使われます。GraphQLは、クライアントが必要なデータを明示的に指定できるため、オーバーフェッチやアンダーフェッチの問題を解決することができます。また、GraphQLは、複数のデータソースからデータを取得することができるため、マイクロサービスアーキテクチャに適しています。GraphQLは、スキーマ定義言語としても機能し、APIのドキュメントを自動生成することができます。\\",\\"createdAt\\":1680429441745}"
+              }
+          },
+          {
+            "type":"action",
+            "action":{
+              "type":"message",
+              "label":"保存しない",
+              "text":"保存しない"
+            }
+          }
+        ]
+      }
+    }
+  ]
