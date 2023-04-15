@@ -18,26 +18,6 @@ type SaveAnswerType = {
   createdAt: number;
 };
 
-type UpdateReferenceType = {
-  replyToken: string;
-  referenceType: string;
-  createdAt: number;
-};
-
-type DynamodbUpdateTransactType = {
-  TransactItems: [
-    Update: {
-      TableName: string;
-      Key: {
-        messageId: string;
-        createdAt: string;
-      };
-      UpdateExpression: string;
-      ExpressionAttributeValues: string;
-    },
-  ];
-};
-
 // dynamodbで何か処理が必要になった時のクラス
 export class ProcessingInDynamo {
   // dynamodb設定
@@ -91,20 +71,12 @@ export class ProcessingInDynamo {
           {
             Update: {
               TableName: process.env.DYNAMODB_TABLE_NAME,
-              // Key: {
-              //   messageId: { S: body.messageId },
-              //   createdAt: { N: String(body.createdAt) },
-              // },
               Key: marshall({
                 messageId: body.messageId,
                 createdAt: body.createdAt,
               }),
               UpdateExpression:
                 'SET referenceType = :value1, updatedAt = :value2',
-              // ExpressionAttributeValues: {
-              //   ':value1': { N: String(body.referenceType) },
-              //   ':value2': { S: body.updatedAt },
-              // },
               ExpressionAttributeValues: marshall({
                 ':value1': body.referenceType,
                 ':value2': body.updatedAt,
@@ -116,15 +88,12 @@ export class ProcessingInDynamo {
 
       params.TransactItems.forEach((item) => {
         console.log('更新パラムス', item.Update);
-        console.log('ここで取得できるか？', body.messageId);
       });
 
       const command = new TransactWriteItemsCommand(params);
 
       try {
-        console.log('tryに入った');
         response = await this.dynamoDB.send(command);
-        console.log('bodyをつける前', response);
         response['body'] = body;
         console.log('body追加後', response);
       } catch (err) {
@@ -164,8 +133,6 @@ export class ProcessingInDynamo {
         memberStatus: 0,
         createdAt: event.timestamp,
       };
-
-      console.log('パラムス', params);
 
       const transactItem = {
         // トランザクション用のparams

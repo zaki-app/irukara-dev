@@ -1,4 +1,4 @@
-# LINEBot TapNote
+# LINEBot Irukara
 
 Lambda と APIGateway で Nest.js を動かしています。
 
@@ -6,10 +6,10 @@ Lambda と APIGateway で Nest.js を動かしています。
 
 ### 必要なもの
 
-- serverless framework
-- cfn-lint(https://qiita.com/5hintaro/items/40fd4d73d146aaaf4636)
-- nest-cli
-- volta
+-   serverless framework
+-   cfn-lint(https://qiita.com/5hintaro/items/40fd4d73d146aaaf4636)
+-   nest-cli
+-   volta
 
 <br>
 
