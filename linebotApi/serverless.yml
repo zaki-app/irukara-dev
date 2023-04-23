@@ -10,6 +10,12 @@ provider:
   runtime: nodejs16.x
   region: ap-northeast-1
   stage: ${opt:stage, self:custom.defaultStage}
+  # ApiGateway
+  httpApi:
+    cors: true
+  # access log
+  logs:
+    httpApi: true
   # IAM
   iam:
     role:
@@ -24,16 +30,6 @@ provider:
             - 'dynamodb:UpdateItem'
             - 'dynamodb:DeleteItem'
           Resource: arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable
-        # - Effect: 'Allow'
-        #   Action:
-        #     - 'dynamodb:DescribeTable'
-        #     - 'dynamodb:Query'
-        #     - 'dynamodb:Scan'
-        #     - 'dynamodb:GetItem'
-        #     - 'dynamodb:PutItem'
-        #     - 'dynamodb:UpdateItem'
-        #     - 'dynamodb:DeleteItem'
-        #   Resource: arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-AnswerTable
 
 custom:
   defaultStage: dev
@@ -90,13 +86,14 @@ functions:
     timeout: 30 #(m)
     tracing: PassThrough # awsの他のサービスを実行するときに、トレース情報を自動的に送信する
     events:
-      - http:
+      # - http:
+      - httpApi:
           method: ANY
           path: /
-      - http:
+      - httpApi:
           method: ANY
           path: /{proxy+}
-          cors: true
+          # cors: true
 
 # DynamoDBの作成
 resources:

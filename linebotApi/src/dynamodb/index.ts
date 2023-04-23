@@ -8,15 +8,16 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { nanoSecondFormat } from 'src/common/timeFormat';
 
 // 型定義
-type SaveAnswerType = {
+interface SaveAnswerType {
   messageId: string;
   userId: string;
+  lineUserId: string;
   question: string;
   answer: string;
   referenceType: number;
   memberStatus: number;
   createdAt: number;
-};
+}
 
 // dynamodbで何か処理が必要になった時のクラス
 export class ProcessingInDynamo {
@@ -34,21 +35,21 @@ export class ProcessingInDynamo {
    * 全てのデータを取得する
    * @returns string
    */
-  async getDatas(): Promise<any> {
-    try {
-      const { Items } = await this.dynamoDB.send(
-        new ScanCommand({
-          TableName: process.env.DYNAMODB_TABLE_NAME,
-        }),
-      );
-      // dynamoのJSONから通常のJSONに変換する
-      const newItems = Items.map((item) => unmarshall(item));
-      return newItems;
-    } catch (err) {
-      console.log('残念ながらエラーになりました', err);
-      throw new InternalServerErrorException(err);
-    }
-  }
+  // async getDatas(): Promise<any> {
+  //   try {
+  //     const { Items } = await this.dynamoDB.send(
+  //       new ScanCommand({
+  //         TableName: process.env.DYNAMODB_TABLE_NAME,
+  //       }),
+  //     );
+  //     // dynamoのJSONから通常のJSONに変換する
+  //     const newItems = Items.map((item) => unmarshall(item));
+  //     return newItems;
+  //   } catch (err) {
+  //     console.log('残念ながらエラーになりました', err);
+  //     throw new InternalServerErrorException(err);
+  //   }
+  // }
 
   /**
    * 保存時の処理
@@ -127,6 +128,7 @@ export class ProcessingInDynamo {
       const params: SaveAnswerType = {
         messageId: event.replyToken,
         userId: event.source.userId,
+        lineUserId: event.source.userId,
         question: event.message.text,
         answer: replayText,
         referenceType: 0,

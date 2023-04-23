@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Logger, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Logger,
+  Put,
+  Headers,
+} from '@nestjs/common';
 import { LineBotService } from './linebot.service';
 import {
   TextMessage,
@@ -18,6 +26,8 @@ import {
   LineBotReqEventDto,
   ReturnReplyMsgDto,
 } from './dto/linebot-req-event.dto';
+import { LineRichMenu } from 'src/line/richMenu';
+import LineInspection from 'src/common/lineInspection';
 
 @Controller('linebot')
 export class LineBotController {
@@ -28,13 +38,28 @@ export class LineBotController {
 
   @Get()
   async getAccess() {
+    console.log('今日はいい天気');
     return 'GETリクエストに変更';
   }
 
   @Post('webhook')
-  async requestLineBot(@Body() req: WebhookRequestBody): Promise<any> {
+  async requestLineBot(
+    @Headers('x-line-signature') signature: string,
+    @Body() req: WebhookRequestBody,
+  ): Promise<any> {
+    // 著名の検証
+    const isSignature = new LineInspection().verifySignature(
+      signature,
+      JSON.stringify(req),
+    );
+    if (!isSignature) throw new Error('invalid signature');
+
     try {
       const events: any = req.events;
+
+      // リッチメニューを適用
+      // const richMenu = new LineRichMenu();
+      // console.log('メインファイル', richMenu);
 
       const results: MessageAPIResponseBase[] = events.map(
         async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
