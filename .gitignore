@@ -37,3 +37,4 @@ lerna-debug.log*
 env*
 docker/dynamodb/*
 csv-data
+appConfig/*
