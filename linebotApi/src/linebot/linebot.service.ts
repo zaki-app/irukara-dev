@@ -60,8 +60,7 @@ export class LineBotService {
         },
         {
           role: 'user',
-          // content: this.randomText + question + this.randomText,
-          content: `${this.randomText}\n${question}\n${this.randomText}`,
+          content: question,
         },
         {
           role: 'system',

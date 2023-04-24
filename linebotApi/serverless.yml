@@ -1,4 +1,4 @@
-service: tap-note-dev
+service: irukara
 
 plugins:
   - serverless-offline
@@ -13,6 +13,13 @@ provider:
   # ApiGateway
   httpApi:
     cors: true
+    # authorizers:
+    #   linebot-auth:
+    #     identitySource: '$request.header.Authorization'
+    #     issuerUrl: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_ACCESS_TOKEN_URL}
+    #     audience:
+    #       - ${self:custom.otherfile.environment.${self:provider.stage}.CHANNEL_SECRET}
+    #     type: jwt
   # access log
   logs:
     httpApi: true
@@ -70,8 +77,8 @@ package:
 functions:
   main:
     handler: dist/main.handler
-    name: ${self:provider.stage}-tap_note
-    description: '${self:provider.stage} tab noteのメイン関数(Nest.js)'
+    name: ${self:provider.stage}-irukara_api
+    description: '${self:provider.stage} irukaraのメイン関数(Nest.js)'
     environment:
       CHANNEL_ACCESS_TOKEN: ${self:custom.otherfile.environment.${self:provider.stage}.CHANNEL_ACCESS_TOKEN}
       CHANNEL_SECRET: ${self:custom.otherfile.environment.${self:provider.stage}.CHANNEL_SECRET}
@@ -80,7 +87,9 @@ functions:
       REGION: ${self:custom.otherfile.environment.${self:provider.stage}.REGION}
       DYNAMODB_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ENDPOINT}
       DYNAMODB_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_TABLE_NAME}
-      # DYNAMODB_ANSWER_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ANSWER_TABLE_NAME}
+      LINEBOT_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_ENDPOINT}
+      LINEBOT_CHANNEL_ID: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_CHANNEL_ID}
+      LINEBOT_ACCESS_TOKEN_URL: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_ACCESS_TOKEN_URL}
     runtime: nodejs16.x
     memorySize: 512
     timeout: 30 #(m)
@@ -90,6 +99,8 @@ functions:
       - httpApi:
           method: ANY
           path: /
+          # authorizer:
+          #   name: linebot-auth
       - httpApi:
           method: ANY
           path: /{proxy+}
@@ -110,6 +121,8 @@ resources:
           # GS
           - AttributeName: userId
             AttributeType: S
+          - AttributeName: lineUserId
+            AttributeType: S
           - AttributeName: referenceType
             AttributeType: N
           - AttributeName: memberStatus
@@ -124,6 +137,12 @@ resources:
           - IndexName: userIdIndex
             KeySchema:
               - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: lineUserIdIndex
+            KeySchema:
+              - AttributeName: lineUserId
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性
