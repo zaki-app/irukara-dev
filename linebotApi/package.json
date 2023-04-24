@@ -21,14 +21,14 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "url": "npx lt --port 6000 --subdomain dev-tap-note-chat-bot-by-yozakura --print-requests",
+    "url": "npx lt --port 6000 --subdomain dev-irukara-chat-bot-by-yozakura --print-requests",
     "urls": "nest build --webpack && ngrok http 6000",
     "deploy": "serverless deploy --stage dev --verbose",
     "deploy:stg": "nest build --webpack && serverless deploy --stage stg --verbose",
     "deploy:prd": "serverless deploy --stage prd --verbose",
     "cfn-lint": "cfn-lint serverless.yml",
-    "req": "curl https://dev-tap-note-chat-bot-by-yozakura.loca.lt/dev/linebot",
-    "req-stg": "curl https://4ss2bf8p3f.execute-api.ap-northeast-1.amazonaws.com/linebot"
+    "req": "curl https://dev-tap-note-chat-bot-by-yozakura.loca.lt/linebot",
+    "req-stg": "curl https://0nksas0pr4.execute-api.ap-northeast-1.amazonaws.com/linebot"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.303.0",
@@ -45,6 +45,7 @@
     "class-validator": "^0.14.0",
     "dayjs": "^1.11.7",
     "express": "^4.18.2",
+    "husky": "^8.0.3",
     "localtunnel": "^2.0.2",
     "openai": "^3.2.1",
     "reflect-metadata": "^0.1.13",

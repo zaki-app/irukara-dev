@@ -26,8 +26,10 @@ import {
   LineBotReqEventDto,
   ReturnReplyMsgDto,
 } from './dto/linebot-req-event.dto';
-import { LineRichMenu } from 'src/line/richMenu';
+import LineRichMenu from 'src/line/richMenu';
 import LineInspection from 'src/common/lineInspection';
+// import * as fs from 'fs';
+import * as fs from 'fs';
 
 @Controller('linebot')
 export class LineBotController {
@@ -38,7 +40,8 @@ export class LineBotController {
 
   @Get()
   async getAccess() {
-    console.log('今日はいい天気');
+    const image = fs.createReadStream('src/assets/richmenu-template.png');
+    console.log('画像', image);
     return 'GETリクエストに変更';
   }
 
@@ -47,19 +50,24 @@ export class LineBotController {
     @Headers('x-line-signature') signature: string,
     @Body() req: WebhookRequestBody,
   ): Promise<any> {
+    // リクエスト
+    // this.logger.log('event', req);
     // 著名の検証
     const isSignature = new LineInspection().verifySignature(
       signature,
       JSON.stringify(req),
     );
-    if (!isSignature) throw new Error('invalid signature');
+    if (!isSignature) {
+      console.error('不正なアクセス', isSignature);
+      throw new Error('invalid signature');
+    }
 
     try {
       const events: any = req.events;
 
       // リッチメニューを適用
-      // const richMenu = new LineRichMenu();
-      // console.log('メインファイル', richMenu);
+      const richMenu = await new LineRichMenu().createRichMenu();
+      console.log('リッチメニュー', richMenu);
 
       const results: MessageAPIResponseBase[] = events.map(
         async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
