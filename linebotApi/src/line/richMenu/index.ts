@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { richMenuConfig } from './config';
 import { ClientConfig, RichMenu, Client } from '@line/bot-sdk';
+import * as path from 'path';
 
 export default class LineRichMenu {
   private readonly lineClient: Client;
@@ -32,7 +33,7 @@ export default class LineRichMenu {
 
   // 画像を設定する
   async setRichMenuImage(): Promise<void> {
-    const image = fs.createReadStream('src/assets/richmenu-template.png');
+    const image = fs.createReadStream('src/assets/richmenu.png');
     // console.log('画像', image);
     const result = await this.lineClient.setRichMenuImage(
       this.richMenuId,
