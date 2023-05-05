@@ -118,8 +118,8 @@ resources:
         AttributeDefinitions:
           - AttributeName: messageId # PK
             AttributeType: S
-          - AttributeName: createdAt # SK
-            AttributeType: N
+          # - AttributeName: createdAt # SK
+          #   AttributeType: N
           # GS
           - AttributeName: userId
             AttributeType: S
@@ -132,8 +132,8 @@ resources:
         KeySchema:
           - AttributeName: messageId
             KeyType: HASH
-          - AttributeName: createdAt
-            KeyType: RANGE
+          # - AttributeName: createdAt
+          #   KeyType: RANGE
         # GSの設定
         GlobalSecondaryIndexes:
           - IndexName: userIdIndex

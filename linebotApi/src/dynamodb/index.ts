@@ -74,7 +74,7 @@ export class ProcessingInDynamo {
               TableName: process.env.DYNAMODB_TABLE_NAME,
               Key: marshall({
                 messageId: body.messageId,
-                createdAt: body.createdAt,
+                // createdAt: body.createdAt,
               }),
               UpdateExpression:
                 'SET referenceType = :value1, updatedAt = :value2',
@@ -136,6 +136,7 @@ export class ProcessingInDynamo {
         createdAt: event.timestamp,
       };
 
+      console.log('パラムス', params);
       const transactItem = {
         // トランザクション用のparams
         TransactItems: [
