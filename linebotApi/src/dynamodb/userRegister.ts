@@ -11,7 +11,7 @@ import { UserInfo } from 'src/dynamodb/types';
 import { UpdateUserTable } from 'src/dynamodb/types';
 
 /**
- * 質問と回答保存時にユーザーが未登録なら登録する
+ * ユーザーが未登録なら登録する
  * @param userId
  * @returns 何も返さない
  */
@@ -74,10 +74,18 @@ export const isRegisterUser = async (userId: string): Promise<UserInfo> => {
     };
 
     const { Item } = await client.send(new GetItemCommand(params));
-    return JSON.stringify({
+
+    const searchUser = JSON.stringify({
       data: Item ? unmarshall(Item) : {},
       isRegister: true,
     });
+    const searchUserParse = JSON.parse(searchUser);
+
+    if (Object.keys(searchUserParse.data).length === 0) {
+      return false;
+    } else {
+      return searchUser;
+    }
   } catch (err) {
     console.log('search User error...', err);
     return false;

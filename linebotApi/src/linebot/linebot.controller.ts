@@ -18,7 +18,11 @@ import { LineBotReqEventDto } from './dto/linebot-req-event.dto';
 import LineRichMenu from 'src/line/richMenu';
 import LineInspection from 'src/common/lineInspection';
 import { isUpperLimit } from 'src/dynamodb/upperLimit';
-import { updateUserInfo } from 'src/dynamodb/userRegister';
+import {
+  isRegisterUser,
+  registerUser,
+  updateUserInfo,
+} from 'src/dynamodb/userRegister';
 import dayjs from 'dayjs';
 import {
   userStatus,
@@ -44,6 +48,7 @@ export class LineBotController {
       signature,
       JSON.stringify(req),
     );
+    console.log('シグネチャ', isSignature);
     if (!isSignature) {
       console.error('不正なアクセス', isSignature);
       throw new Error('invalid signature');
@@ -59,8 +64,12 @@ export class LineBotController {
         async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
           this.logger.log('event...', event);
 
+          // ユーザーが未登録なら登録する
+          const isRegister = await isRegisterUser(event.source.userId);
+          console.log('ユーザー登録状況', isRegister);
+          if (!isRegister) await registerUser(event.source.userId);
+
           // 今日のカウント上限に到達してないか確認
-          // trueなら処理を続行、false(上限達成)ならその旨のメッセージを送信
           const isLimit = await isUpperLimit(event.source.userId);
 
           if (
@@ -68,7 +77,9 @@ export class LineBotController {
               isLimit.status === userStatus.billingToFree) &&
             isLimit.todayCount >= userMessageLimit.free
           ) {
-            console.log('もう上限なので送れません');
+            console.log(
+              `こちらのユーザー(${event.source.userId})は上限に到達しました`,
+            );
             return lineBotClient().replyMessage(event.replyToken, {
               type: 'text',
               text: toUpperLimitMessage.text,

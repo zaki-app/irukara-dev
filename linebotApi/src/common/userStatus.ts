@@ -16,7 +16,7 @@ export const userStatus = {
  * １日に送信できるメッセージの上限
  */
 export const userMessageLimit = {
-  free: 2,
+  free: 3,
   billing: 100,
   billingToFree: 2,
 };

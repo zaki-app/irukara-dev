@@ -33,7 +33,6 @@ export class ProcessingInDynamo {
               TableName: process.env.DYNAMODB_TABLE_NAME,
               Key: marshall({
                 messageId: body.messageId,
-                // createdAt: body.createdAt,
               }),
               UpdateExpression:
                 'SET referenceType = :value1, updatedAt = :value2',
@@ -45,10 +44,6 @@ export class ProcessingInDynamo {
           },
         ],
       };
-
-      // params.TransactItems.forEach((item) => {
-      //   console.log('更新パラムス', item.Update.ExpressionAttributeValues);
-      // });
 
       const command = new TransactWriteItemsCommand(params);
 
@@ -118,15 +113,15 @@ export class ProcessingInDynamo {
       );
 
       // 同時に未登録ならユーザーテーブルにも保存する
-      const result: string | boolean = await isRegisterUser(
-        event.source.userId,
-      );
-      if (typeof result === 'string') {
-        const resultJs = JSON.parse(result);
-        if (!resultJs.isRegister) {
-          await registerUser(event.source.userId);
-        }
-      }
+      // const result: string | boolean = await isRegisterUser(
+      //   event.source.userId,
+      // );
+      // if (typeof result === 'string') {
+      //   const resultJs = JSON.parse(result);
+      //   if (!resultJs.isRegister) {
+      //     await registerUser(event.source.userId);
+      //   }
+      // }
       // ユーザーの送信カウントを1増加させる
       const userCount = await todayCount(event.source.userId);
       console.log('カウント', userCount);
