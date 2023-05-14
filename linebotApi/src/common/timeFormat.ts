@@ -11,3 +11,8 @@ export const nanoSecondFormat = () => {
   console.log('unix時間', dayjs(1680350117564).format(nanoFormat));
   return dayjs().format(nanoFormat);
 };
+
+// 日本時間に変換したdayjsにする関数
+export const jpDayjs = () => {
+  return dayjs();
+};
