@@ -1,55 +1,16 @@
-import { InternalServerErrorException, Logger } from '@nestjs/common';
-import {
-  DynamoDBClient,
-  ScanCommand,
-  TransactWriteItemsCommand,
-} from '@aws-sdk/client-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { nanoSecondFormat } from 'src/common/timeFormat';
-
-// 型定義
-interface SaveAnswerType {
-  messageId: string;
-  userId: string;
-  lineUserId: string;
-  question: string;
-  answer: string;
-  referenceType: number;
-  memberStatus: number;
-  createdAt: number;
-}
+import { Logger } from '@nestjs/common';
+import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
+import { marshall } from '@aws-sdk/util-dynamodb';
+import { SaveAnswerType } from 'src/dynamodb/types';
+import { registerUser, isRegisterUser } from 'src/dynamodb/userRegister';
+import { todayCount } from './messageCount';
+import DynamoClient from 'src/dynamodb/client';
+import dayjs from 'dayjs';
 
 // dynamodbで何か処理が必要になった時のクラス
 export class ProcessingInDynamo {
   // dynamodb設定
-  private readonly dynamoDB = process.env.IS_OFFLINE
-    ? new DynamoDBClient({
-        region: 'localhost',
-        endpoint: process.env.DYNAMODB_ENDPOINT,
-      })
-    : new DynamoDBClient({
-        region: process.env.REGION,
-      });
-
-  /**
-   * 全てのデータを取得する
-   * @returns string
-   */
-  // async getDatas(): Promise<any> {
-  //   try {
-  //     const { Items } = await this.dynamoDB.send(
-  //       new ScanCommand({
-  //         TableName: process.env.DYNAMODB_TABLE_NAME,
-  //       }),
-  //     );
-  //     // dynamoのJSONから通常のJSONに変換する
-  //     const newItems = Items.map((item) => unmarshall(item));
-  //     return newItems;
-  //   } catch (err) {
-  //     console.log('残念ながらエラーになりました', err);
-  //     throw new InternalServerErrorException(err);
-  //   }
-  // }
+  private readonly dynamoDB = DynamoClient();
 
   /**
    * 保存時の処理
@@ -61,11 +22,9 @@ export class ProcessingInDynamo {
 
   async updateMessage(event) {
     let response: any;
-    console.log('イベント', event);
     try {
       const body = JSON.parse(event);
       console.log('ボディ', body);
-      body.updatedAt = nanoSecondFormat();
 
       const params = {
         TransactItems: [
@@ -80,19 +39,20 @@ export class ProcessingInDynamo {
                 'SET referenceType = :value1, updatedAt = :value2',
               ExpressionAttributeValues: marshall({
                 ':value1': body.referenceType,
-                ':value2': body.updatedAt,
+                ':value2': dayjs().unix(),
               }),
             },
           },
         ],
       };
 
-      params.TransactItems.forEach((item) => {
-        console.log('更新パラムス', item.Update);
-      });
+      // params.TransactItems.forEach((item) => {
+      //   console.log('更新パラムス', item.Update.ExpressionAttributeValues);
+      // });
 
       const command = new TransactWriteItemsCommand(params);
 
+      // メッセージ保存処理
       try {
         response = await this.dynamoDB.send(command);
         response['body'] = body;
@@ -104,6 +64,10 @@ export class ProcessingInDynamo {
           errorStack: err.errorStack,
         });
       }
+
+      // メッセージカウント処理
+      try {
+      } catch (err) {}
     } catch (err) {
       new Logger.error('レコード更新エラー', err);
       response.body = JSON.stringify({
@@ -133,7 +97,7 @@ export class ProcessingInDynamo {
         answer: replayText,
         referenceType: 0,
         memberStatus: 0,
-        createdAt: event.timestamp,
+        createdAt: dayjs().unix(),
       };
 
       console.log('パラムス', params);
@@ -148,13 +112,24 @@ export class ProcessingInDynamo {
           },
         ],
       };
-      const transact = transactItem.TransactItems.map((item) => {
-        return item.Put.Item;
-      });
-      console.log('トランザクション', transact);
+
       const createTransact = await this.dynamoDB.send(
         new TransactWriteItemsCommand(transactItem),
       );
+
+      // 同時に未登録ならユーザーテーブルにも保存する
+      const result: string | boolean = await isRegisterUser(
+        event.source.userId,
+      );
+      if (typeof result === 'string') {
+        const resultJs = JSON.parse(result);
+        if (!resultJs.isRegister) {
+          await registerUser(event.source.userId);
+        }
+      }
+      // ユーザーの送信カウントを1増加させる
+      const userCount = await todayCount(event.source.userId);
+      console.log('カウント', userCount);
 
       // レスポンスに保存データを含める
       createTransact['data'] = params;

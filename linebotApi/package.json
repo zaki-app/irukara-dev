@@ -11,7 +11,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "buildoff": "nest build --webpack && npx serverless offline --httpPort 6000 --stage dev",
+    "dev": "nest build --webpack && npx serverless offline --httpPort 6000 --stage dev",
     "offline": "npx serverless offline --httpPort 6000",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",

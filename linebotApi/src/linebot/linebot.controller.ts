@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Logger,
-  Put,
-  Headers,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Logger, Headers } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
 import {
   TextMessage,
@@ -22,14 +14,17 @@ import { lineBotClient } from 'src/line/replyMessage/lineBotClient';
 import { sorryReply } from 'src/line/replyMessage/sorryReply';
 import { saveQuick } from 'src/line/quickReply.ts/saveQuick';
 import { ProcessingInDynamo } from 'src/dynamodb';
-import {
-  LineBotReqEventDto,
-  ReturnReplyMsgDto,
-} from './dto/linebot-req-event.dto';
+import { LineBotReqEventDto } from './dto/linebot-req-event.dto';
 import LineRichMenu from 'src/line/richMenu';
 import LineInspection from 'src/common/lineInspection';
-// import * as fs from 'fs';
-import * as fs from 'fs';
+import { isUpperLimit } from 'src/dynamodb/upperLimit';
+import { updateUserInfo } from 'src/dynamodb/userRegister';
+import dayjs from 'dayjs';
+import {
+  userStatus,
+  userMessageLimit,
+  toUpperLimitMessage,
+} from 'src/common/userStatus';
 
 @Controller('linebot')
 export class LineBotController {
@@ -38,20 +33,12 @@ export class LineBotController {
     private readonly logger: Logger,
   ) {}
 
-  @Get()
-  async getAccess() {
-    const image = fs.createReadStream('src/assets/richmenu-template.png');
-    console.log('画像', image);
-    return 'GETリクエストに変更';
-  }
-
   @Post('webhook')
   async requestLineBot(
     @Headers('x-line-signature') signature: string,
     @Body() req: WebhookRequestBody,
   ): Promise<any> {
-    // リクエスト
-    // this.logger.log('event', req);
+    console.time('test');
     // 著名の検証
     const isSignature = new LineInspection().verifySignature(
       signature,
@@ -62,16 +49,34 @@ export class LineBotController {
       throw new Error('invalid signature');
     }
 
+    // リッチメニューを適用
+    await new LineRichMenu().createRichMenu();
+
     try {
       const events: any = req.events;
-
-      // リッチメニューを適用
-      const richMenu = await new LineRichMenu().createRichMenu();
-      console.log('リッチメニュー', richMenu);
 
       const results: MessageAPIResponseBase[] = events.map(
         async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
           this.logger.log('event...', event);
+
+          // 今日のカウント上限に到達してないか確認
+          // trueなら処理を続行、false(上限達成)ならその旨のメッセージを送信
+          const isLimit = await isUpperLimit(event.source.userId);
+
+          if (
+            (isLimit.status === userStatus.free ||
+              isLimit.status === userStatus.billingToFree) &&
+            isLimit.todayCount >= userMessageLimit.free
+          ) {
+            console.log('もう上限なので送れません');
+            return lineBotClient().replyMessage(event.replyToken, {
+              type: 'text',
+              text: toUpperLimitMessage.text,
+              // quickReply: {
+              //   items: sorryQuickReply,
+              // },
+            });
+          }
 
           if (event.type !== 'message' || event.message.type !== 'text') {
             // referenceTypeの値によって保存か削除か分かれる
@@ -131,6 +136,10 @@ export class LineBotController {
 
           // 一度、回答をdynamodbに保存する
           await new ProcessingInDynamo().createMessage(event, replyText);
+          // ユーザーテーブルの最終ログインを更新する
+          await updateUserInfo(event.source.userId, {
+            lastLogin: dayjs().unix(),
+          });
 
           const quickItems = await saveQuick(event, replyText);
 
@@ -150,19 +159,13 @@ export class LineBotController {
       );
       const response = await Promise.all(results);
       this.logger.log('最後のレスポンス', response);
+
+      console.timeEnd('test');
       return response;
     } catch (err) {
       console.error(err);
       this.logger.error(`LineBotエラー: ${err}`);
       return err;
     }
-  }
-
-  @Put('webhook')
-  async putData(@Body() req) {
-    console.log('更新リクエスト', req);
-    const result = await new ProcessingInDynamo().updateMessage(req);
-    console.log('更新の結果', result);
-    return result;
   }
 }
