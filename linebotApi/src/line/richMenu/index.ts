@@ -32,12 +32,7 @@ export default class LineRichMenu {
   // 画像を設定する
   async setRichMenuImage(): Promise<void> {
     const image = fs.createReadStream('src/assets/richmenu.png');
-    // console.log('画像', image);
-    const result = await this.lineClient.setRichMenuImage(
-      this.richMenuId,
-      image,
-    );
-    console.log('画像は設定されえた？？', result);
+    await this.lineClient.setRichMenuImage(this.richMenuId, image);
   }
 
   // デフォルトのリッチメニューを設定

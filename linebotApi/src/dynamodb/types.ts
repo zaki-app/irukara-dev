@@ -65,3 +65,11 @@ export interface UpdateUserTable {
   updatedAt?: number;
   deletedAt?: number;
 }
+
+// postback時の型
+export interface PostbackType {
+  userId?: string;
+  messageId: string;
+  referenceType: number;
+  createdAt: number;
+}

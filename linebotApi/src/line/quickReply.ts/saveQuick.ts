@@ -11,13 +11,11 @@ export const saveQuick = async (
   event: any,
   text?: string,
 ): Promise<QuickReplyItem[]> => {
-  console.log('回答を送れるか？', event, text);
-
   const params: QuickReplyItem[] = [
     /**
      * TODO 今後、参考になったならなかったボタンを設置するのでreferenceは残す
      */
-    // 保存は1, 保存しないは3に更新する, 何もしていないは0
+    // 保存は1, 保存しないは2に更新する, 何もしていないは0
     {
       type: 'action',
       action: {
@@ -25,6 +23,7 @@ export const saveQuick = async (
         label: '保存する',
         // dataは最大300文字の制限あり
         data: JSON.stringify({
+          userId: event.source.userId,
           messageId: event.replyToken,
           referenceType: 1,
           createdAt: event.timestamp,
@@ -37,8 +36,9 @@ export const saveQuick = async (
         type: 'postback',
         label: '保存しない',
         data: JSON.stringify({
+          userId: event.source.userId,
           messageId: event.replyToken,
-          referenceType: 3,
+          referenceType: 2,
           createdAt: event.timestamp,
         }),
       },

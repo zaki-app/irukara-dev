@@ -1,9 +1,10 @@
 import DynamoClient from 'src/dynamodb/client';
 import { isRegisterUser } from 'src/dynamodb/userRegister';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { UserInfo } from 'src/dynamodb/types';
+import { jpDayjs } from 'src/common/timeFormat';
 
 /**
  * ユーザーの今日の送信回数、合計の送信回数をカウントする関数
@@ -23,7 +24,7 @@ export const todayCount = async (userId: string) => {
       if (userInfoParse.isRegister) {
         count = parseInt(userInfoParse.data.todayCount) + 1;
         totalCount = parseInt(userInfoParse.data.totalCount) + 1;
-        console.log(count, totalCount);
+        console.log('メッセージカウント', count, totalCount);
       }
 
       // count, totalCountを更新する
@@ -40,7 +41,7 @@ export const todayCount = async (userId: string) => {
               ExpressionAttributeValues: marshall({
                 ':value1': count,
                 ':value2': totalCount,
-                ':value3': dayjs().unix(),
+                ':value3': jpDayjs().unix(),
               }),
             },
           },
@@ -48,13 +49,26 @@ export const todayCount = async (userId: string) => {
       };
 
       const command = new TransactWriteItemsCommand(params);
-      const response = await client.send(command);
-      console.log('レスポンス', response);
+      await client.send(command);
+
+      const response = JSON.stringify({
+        statusCode: 200,
+        body: {
+          updateData: {
+            todayCount: count,
+            totalCount: totalCount,
+          },
+        },
+      });
 
       return response;
     }
   } catch (err) {
-    console.log('updated error...', err);
+    return JSON.stringify({
+      statusCode: 500,
+      message: err.message,
+      stack: err.stack,
+    });
   }
 };
 
