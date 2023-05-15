@@ -1,9 +1,8 @@
-import DynamoClient from 'src/dynamodb/client';
 import { isRegisterUser, updateUserInfo } from 'src/dynamodb/userRegister';
 import { IsRegisterUser } from 'src/dynamodb/types';
 import { UserInfo } from 'src/dynamodb/types';
-import dayjs from 'dayjs';
-import { UpdateUserTable } from 'src/dynamodb/types';
+// import dayjs from 'dayjs';
+import { jpDayjs } from 'src/common/timeFormat';
 
 /**
  * ユーザーの送信数、保存数を特定の条件下でリセットする
@@ -13,13 +12,13 @@ import { UpdateUserTable } from 'src/dynamodb/types';
  */
 export const isUpperLimit = async (userId: string) => {
   const userInfo: UserInfo = await isRegisterUser(userId);
-  console.log('最初に見るユーザー情報', userInfo);
 
   if (typeof userInfo === 'string') {
     const userInfoParse: IsRegisterUser = JSON.parse(userInfo);
+    console.log('upperLimit対象データ', userInfoParse);
 
-    const currentUnix: number = dayjs().unix();
-    const todayStartUnix: number = dayjs().startOf('day').unix();
+    const currentUnix: number = jpDayjs().unix();
+    const todayStartUnix: number = jpDayjs().startOf('day').unix();
 
     // 条件分岐
     if (

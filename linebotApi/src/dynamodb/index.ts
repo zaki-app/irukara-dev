@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import { SaveAnswerType } from 'src/dynamodb/types';
-import { registerUser, isRegisterUser } from 'src/dynamodb/userRegister';
+import { SaveAnswerType, PostbackType } from 'src/dynamodb/types';
 import { todayCount } from './messageCount';
 import DynamoClient from 'src/dynamodb/client';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
+import { jpDayjs } from 'src/common/timeFormat';
 
 // dynamodbで何か処理が必要になった時のクラス
 export class ProcessingInDynamo {
@@ -20,10 +20,9 @@ export class ProcessingInDynamo {
    * @returns
    */
 
-  async updateMessage(event) {
-    let response: any;
+  async updateMessage(event: string | undefined) {
     try {
-      const body = JSON.parse(event);
+      const body: PostbackType = JSON.parse(event);
       console.log('ボディ', body);
 
       const params = {
@@ -38,7 +37,7 @@ export class ProcessingInDynamo {
                 'SET referenceType = :value1, updatedAt = :value2',
               ExpressionAttributeValues: marshall({
                 ':value1': body.referenceType,
-                ':value2': dayjs().unix(),
+                ':value2': jpDayjs().unix(),
               }),
             },
           },
@@ -49,31 +48,34 @@ export class ProcessingInDynamo {
 
       // メッセージ保存処理
       try {
-        response = await this.dynamoDB.send(command);
-        response['body'] = body;
-        console.log('body追加後', response);
+        await this.dynamoDB.send(command);
+        // 保存カウント用にuserIdを追加
+        body['userId'] = body.userId;
+        const response = JSON.stringify({
+          statusCode: 200,
+          data: body,
+        });
+
+        return response;
       } catch (err) {
-        response.body = JSON.stringify({
+        const response = JSON.stringify({
           message: 'Faild to Update...',
           errorMsg: err.message,
           errorStack: err.errorStack,
         });
-      }
 
-      // メッセージカウント処理
-      try {
-      } catch (err) {}
+        return response;
+      }
     } catch (err) {
       new Logger.error('レコード更新エラー', err);
-      response.body = JSON.stringify({
+      const response = JSON.stringify({
         message: 'dynamodb以外でエラー',
         errorMsg: err.message,
         errorStack: err.errorStack,
       });
-    }
 
-    new Logger().log('更新レスポンス', response);
-    return response;
+      return response;
+    }
   }
   /**
    * 質問と回答を保存する
@@ -92,10 +94,10 @@ export class ProcessingInDynamo {
         answer: replayText,
         referenceType: 0,
         memberStatus: 0,
-        createdAt: dayjs().unix(),
+        createdAt: jpDayjs().unix(),
       };
 
-      console.log('パラムス', params);
+      console.log('メッセージ保存パラムス', params);
       const transactItem = {
         // トランザクション用のparams
         TransactItems: [
@@ -108,31 +110,28 @@ export class ProcessingInDynamo {
         ],
       };
 
-      const createTransact = await this.dynamoDB.send(
-        new TransactWriteItemsCommand(transactItem),
-      );
+      // メッセージの保存
+      await this.dynamoDB.send(new TransactWriteItemsCommand(transactItem));
 
-      // 同時に未登録ならユーザーテーブルにも保存する
-      // const result: string | boolean = await isRegisterUser(
-      //   event.source.userId,
-      // );
-      // if (typeof result === 'string') {
-      //   const resultJs = JSON.parse(result);
-      //   if (!resultJs.isRegister) {
-      //     await registerUser(event.source.userId);
-      //   }
-      // }
       // ユーザーの送信カウントを1増加させる
       const userCount = await todayCount(event.source.userId);
-      console.log('カウント', userCount);
+      console.log('メッセージカウントレスポンス', userCount);
 
-      // レスポンスに保存データを含める
-      createTransact['data'] = params;
+      const answerResponse = JSON.stringify({
+        statusCode: 200,
+        body: {
+          data: params,
+        },
+      });
 
-      console.log('回答保存レスポンス', createTransact);
-      return createTransact;
+      console.log('回答保存レスポンス', answerResponse);
+      return answerResponse;
     } catch (err) {
-      new Logger().error('保存時のエラー', err);
+      return JSON.stringify({
+        statusCode: 500,
+        message: err.message,
+        stack: err.stack,
+      });
     }
   }
 

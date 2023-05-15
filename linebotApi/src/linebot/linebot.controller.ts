@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Logger, Headers } from '@nestjs/common';
+import { Body, Controller, Post, Logger, Headers } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
 import {
   TextMessage,
@@ -23,12 +23,14 @@ import {
   registerUser,
   updateUserInfo,
 } from 'src/dynamodb/userRegister';
-import dayjs from 'dayjs';
 import {
   userStatus,
   userMessageLimit,
   toUpperLimitMessage,
 } from 'src/common/userStatus';
+import { todaySave } from 'src/dynamodb/messageSave';
+import { jpDayjs } from 'src/common/timeFormat';
+import { UserInfo } from 'src/dynamodb/types';
 
 @Controller('linebot')
 export class LineBotController {
@@ -65,47 +67,59 @@ export class LineBotController {
           this.logger.log('event...', event);
 
           // ユーザーが未登録なら登録する
-          const isRegister = await isRegisterUser(event.source.userId);
+          const isRegister: UserInfo = await isRegisterUser(
+            event.source.userId,
+          );
           console.log('ユーザー登録状況', isRegister);
           if (!isRegister) await registerUser(event.source.userId);
 
-          // 今日のカウント上限に到達してないか確認
-          const isLimit = await isUpperLimit(event.source.userId);
-
-          if (
-            (isLimit.status === userStatus.free ||
-              isLimit.status === userStatus.billingToFree) &&
-            isLimit.todayCount >= userMessageLimit.free
-          ) {
-            console.log(
-              `こちらのユーザー(${event.source.userId})は上限に到達しました`,
-            );
-            return lineBotClient().replyMessage(event.replyToken, {
-              type: 'text',
-              text: toUpperLimitMessage.text,
-              // quickReply: {
-              //   items: sorryQuickReply,
-              // },
-            });
+          // テキストの場合は今日のメッセージカウント上限に到達してないか確認
+          if (event.type !== 'postback') {
+            const isLimit = await isUpperLimit(event.source.userId);
+            console.log('isLimit', isLimit);
+            if (
+              (isLimit.status === userStatus.free ||
+                isLimit.status === userStatus.billingToFree) &&
+              isLimit.todayCount >= userMessageLimit.free
+            ) {
+              console.log(
+                `こちらのユーザー(${event.source.userId})は上限に到達しました`,
+              );
+              return lineBotClient().replyMessage(event.replyToken, {
+                type: 'text',
+                text: toUpperLimitMessage.text,
+                // quickReply: {
+                //   items: sorryQuickReply,
+                // },
+              });
+            }
           }
 
+          /**
+           * メッセージ保存時や、テキストメッセージ以外の処理
+           */
           if (event.type !== 'message' || event.message.type !== 'text') {
             // referenceTypeの値によって保存か削除か分かれる
             if (event.type === 'postback') {
               console.log('postbackの処理', event.postback);
-              // dynamodb更新処理へ
-              const updateResult = await new ProcessingInDynamo().updateMessage(
-                event.postback.data,
-              );
+              // referenceTypeの更新処理へ
+              const updatedReferenceType =
+                await new ProcessingInDynamo().updateMessage(
+                  event.postback.data,
+                );
+              const updateResultParse = JSON.parse(updatedReferenceType);
+              // メッセージの保存回数を更新
+              await todaySave(updateResultParse.data.userId);
               // referenceの値によって返信するメッセージを変更
               const postbackMessage =
-                updateResult.body.referenceType === 1
+                updateResultParse.data.referenceType === 1
                   ? '保存しました😋'
                   : '保存しませんでした🌀';
               const textMessage: TextMessage = {
                 type: 'text',
                 text: postbackMessage,
               };
+
               return lineBotClient().replyMessage(
                 event.replyToken,
                 textMessage,
@@ -149,7 +163,7 @@ export class LineBotController {
           await new ProcessingInDynamo().createMessage(event, replyText);
           // ユーザーテーブルの最終ログインを更新する
           await updateUserInfo(event.source.userId, {
-            lastLogin: dayjs().unix(),
+            lastLogin: jpDayjs().unix(),
           });
 
           const quickItems = await saveQuick(event, replyText);

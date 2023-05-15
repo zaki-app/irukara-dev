@@ -1,7 +1,7 @@
 import { UserInfoType } from './types';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
 import DynamoClient from 'src/dynamodb/client';
 import {
   TransactWriteItemsCommand,
@@ -9,15 +9,14 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { UserInfo } from 'src/dynamodb/types';
 import { UpdateUserTable } from 'src/dynamodb/types';
+import { jpDayjs } from 'src/common/timeFormat';
 
 /**
  * ユーザーが未登録なら登録する
  * @param userId
- * @returns 何も返さない
+ * @returns JSON形式のレスポンス string
  */
-export const registerUser = async (userId: string): Promise<void> => {
-  console.log('プロップス', userId);
-
+export const registerUser = async (userId: string): Promise<string> => {
   try {
     const client = DynamoClient();
 
@@ -25,12 +24,12 @@ export const registerUser = async (userId: string): Promise<void> => {
       userId: userId,
       subUserId: uuidv4(),
       status: 0,
-      todayCount: 1,
-      totalCount: 1,
+      todayCount: 0,
+      totalCount: 0,
       todaySave: 0,
       totalSave: 0,
-      lastLogin: dayjs().unix(),
-      createdAt: dayjs().unix(),
+      lastLogin: jpDayjs().unix(),
+      createdAt: jpDayjs().unix(),
     };
 
     const transactItem = {
@@ -44,14 +43,21 @@ export const registerUser = async (userId: string): Promise<void> => {
       ],
     };
 
-    const registerUser = await client.send(
-      new TransactWriteItemsCommand(transactItem),
-    );
+    await client.send(new TransactWriteItemsCommand(transactItem));
 
     // ユーザーが正常保存されたら何も返さない
-    console.log('create user...', registerUser);
+    return JSON.stringify({
+      statusCode: 200,
+      body: {
+        data: params,
+      },
+    });
   } catch (err) {
-    console.log('not user register...', err);
+    return JSON.stringify({
+      statusCode: 500,
+      message: err.errorMessage,
+      stack: err.stack,
+    });
   }
 };
 
@@ -61,7 +67,7 @@ export const registerUser = async (userId: string): Promise<void> => {
  * @returns IsRegisterUser
  */
 export const isRegisterUser = async (userId: string): Promise<UserInfo> => {
-  console.log('ユーザーID', userId);
+  // console.log('ユーザーID', userId);
 
   try {
     const client = DynamoClient();
