@@ -27,10 +27,12 @@ import {
   userStatus,
   userMessageLimit,
   toUpperLimitMessage,
+  toUpperLimitSaved,
+  userSavedLimit,
 } from 'src/common/userStatus';
 import { todaySave } from 'src/dynamodb/messageSave';
 import { jpDayjs } from 'src/common/timeFormat';
-import { UserInfo } from 'src/dynamodb/types';
+import { PostbackType, UserInfo } from 'src/dynamodb/types';
 
 @Controller('linebot')
 export class LineBotController {
@@ -66,24 +68,29 @@ export class LineBotController {
         async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
           this.logger.log('event...', event);
 
-          // ユーザーが未登録なら登録する
+          // userIdが存在するか確認
           const isRegister: UserInfo = await isRegisterUser(
             event.source.userId,
           );
-          console.log('ユーザー登録状況', isRegister);
+
+          // 登録がなかったら登録処理
           if (!isRegister) await registerUser(event.source.userId);
 
-          // テキストの場合は今日のメッセージカウント上限に到達してないか確認
+          /**
+           * postback以外の処理
+           */
           if (event.type !== 'postback') {
-            const isLimit = await isUpperLimit(event.source.userId);
-            console.log('isLimit', isLimit);
+            // 0::00になったらメッセージ上限のリセット
+            const params = { todayCount: 0, todaySave: 0 };
+            const isLimit = await isUpperLimit(event.source.userId, params);
+            console.log('message isLimit', isLimit);
             if (
               (isLimit.status === userStatus.free ||
                 isLimit.status === userStatus.billingToFree) &&
               isLimit.todayCount >= userMessageLimit.free
             ) {
               console.log(
-                `こちらのユーザー(${event.source.userId})は上限に到達しました`,
+                `こちらのユーザー(${event.source.userId})はメッセージ上限に到達しました`,
               );
               return lineBotClient().replyMessage(event.replyToken, {
                 type: 'text',
@@ -96,23 +103,51 @@ export class LineBotController {
           }
 
           /**
-           * メッセージ保存時や、テキストメッセージ以外の処理
+           * 基本的にpostback(保存するしないボタンクリック時)の処理
            */
           if (event.type !== 'message' || event.message.type !== 'text') {
-            // referenceTypeの値によって保存か削除か分かれる
             if (event.type === 'postback') {
-              console.log('postbackの処理', event.postback);
-              // referenceTypeの更新処理へ
-              const updatedReferenceType =
-                await new ProcessingInDynamo().updateMessage(
-                  event.postback.data,
+              const postbackParse: PostbackType = JSON.parse(
+                event.postback.data,
+              );
+              console.log('postback', postbackParse);
+
+              // 保存するボタンクック時
+              if (postbackParse.referenceType === 1) {
+                // 0::00になったら保存上限のリセット
+                const params = { todaySave: 0, totalSave: 0 };
+                const isLimit = await isUpperLimit(
+                  postbackParse.userId,
+                  params,
                 );
-              const updateResultParse = JSON.parse(updatedReferenceType);
-              // メッセージの保存回数を更新
-              await todaySave(updateResultParse.data.userId);
+                console.log('saved count isLimit', isLimit);
+
+                if (
+                  (isLimit.status === userStatus.free ||
+                    isLimit.status === userStatus.billingToFree) &&
+                  isLimit.todaySave >= userSavedLimit.free
+                ) {
+                  console.log(
+                    `こちらのユーザー(${postbackParse.userId})は保存回数上限に到達しました`,
+                  );
+                  return lineBotClient().replyMessage(event.replyToken, {
+                    type: 'text',
+                    text: toUpperLimitSaved.text,
+                    // quickReply: {
+                    //   items: sorryQuickReply,
+                    // },
+                  });
+                }
+                // referenceTypeの更新処理へ
+                const updatedReferenceType =
+                  await new ProcessingInDynamo().updateMessage(postbackParse);
+                const updateResultParse = JSON.parse(updatedReferenceType);
+                // メッセージの保存回数を更新
+                await todaySave(updateResultParse.data.userId);
+              }
               // referenceの値によって返信するメッセージを変更
               const postbackMessage =
-                updateResultParse.data.referenceType === 1
+                postbackParse.referenceType === 1
                   ? '保存しました😋'
                   : '保存しませんでした🌀';
               const textMessage: TextMessage = {

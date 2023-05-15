@@ -22,8 +22,24 @@ export const userMessageLimit = {
 };
 
 /**
- * 上限を超えた場合のメッセージ
+ * 1日に保存できる上限
+ */
+export const userSavedLimit = {
+  free: 3,
+  billing: 100,
+  billingToFree: 3,
+};
+
+/**
+ * メッセージ送信上限を超えたリプライメッセージ
  */
 export const toUpperLimitMessage = {
   text: '本日の送信上限に到達しました🙇🙇‍♂️\n無料プランでは1日15通までのメッセージ送信と3通のメッセージ保存ができます。\n良かったら有料プランもご検討くださいませ👀',
+};
+
+/**
+ * 保存回数上限を超えたリプライメッセージ
+ */
+export const toUpperLimitSaved = {
+  text: '本日の保存上限に到達しました🙇🙇‍♂️\n無料プランでは1日15通までのメッセージ送信と3通のメッセージ保存ができます。\n良かったら有料プランもご検討くださいませ👀',
 };
