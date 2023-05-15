@@ -20,10 +20,10 @@ export class ProcessingInDynamo {
    * @returns
    */
 
-  async updateMessage(event: string | undefined) {
+  async updateMessage(data: PostbackType) {
     try {
-      const body: PostbackType = JSON.parse(event);
-      console.log('ボディ', body);
+      // const body: PostbackType = JSON.parse(event);
+      // console.log('ボディ', body);
 
       const params = {
         TransactItems: [
@@ -31,12 +31,12 @@ export class ProcessingInDynamo {
             Update: {
               TableName: process.env.DYNAMODB_TABLE_NAME,
               Key: marshall({
-                messageId: body.messageId,
+                messageId: data.messageId,
               }),
               UpdateExpression:
                 'SET referenceType = :value1, updatedAt = :value2',
               ExpressionAttributeValues: marshall({
-                ':value1': body.referenceType,
+                ':value1': data.referenceType,
                 ':value2': jpDayjs().unix(),
               }),
             },
@@ -50,10 +50,10 @@ export class ProcessingInDynamo {
       try {
         await this.dynamoDB.send(command);
         // 保存カウント用にuserIdを追加
-        body['userId'] = body.userId;
+        data['userId'] = data.userId;
         const response = JSON.stringify({
           statusCode: 200,
-          data: body,
+          data: data,
         });
 
         return response;

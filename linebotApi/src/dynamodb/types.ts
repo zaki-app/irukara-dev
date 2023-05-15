@@ -73,3 +73,13 @@ export interface PostbackType {
   referenceType: number;
   createdAt: number;
 }
+
+// メッセージ送信、postbackでの上限をリセット
+export interface UpperLimitParams {
+  todayCount?: number;
+  totalCount?: number;
+  todaySave?: number;
+  totalSave?: number;
+  lastLogin?: number;
+  updatedAt?: number;
+}
