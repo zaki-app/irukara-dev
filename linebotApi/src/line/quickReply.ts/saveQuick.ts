@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { QuickReplyItem } from '@line/bot-sdk';
+import { createUserIdHash } from 'src/common/createHash';
 
 /**
  * 回答返信後に表示する保存クイックリプライ
@@ -11,6 +12,8 @@ export const saveQuick = async (
   event: any,
   text?: string,
 ): Promise<QuickReplyItem[]> => {
+  // ユーザーIDはハッシュ化する
+  const hashUserId = createUserIdHash(event.source.userId);
   const params: QuickReplyItem[] = [
     /**
      * TODO 今後、参考になったならなかったボタンを設置するのでreferenceは残す
@@ -23,7 +26,8 @@ export const saveQuick = async (
         label: '保存する',
         // dataは最大300文字の制限あり
         data: JSON.stringify({
-          userId: event.source.userId,
+          // userId: event.source.userId,
+          userId: hashUserId,
           messageId: event.replyToken,
           referenceType: 1,
           createdAt: event.timestamp,
@@ -36,7 +40,8 @@ export const saveQuick = async (
         type: 'postback',
         label: '保存しない',
         data: JSON.stringify({
-          userId: event.source.userId,
+          // userId: event.source.userId,
+          userId: hashUserId,
           messageId: event.replyToken,
           referenceType: 2,
           createdAt: event.timestamp,

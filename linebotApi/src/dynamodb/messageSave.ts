@@ -5,6 +5,7 @@ import { marshall } from '@aws-sdk/util-dynamodb';
 // import dayjs from 'dayjs';
 import { jpDayjs } from 'src/common/timeFormat';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
+import { createUserIdHash } from 'src/common/createHash';
 
 /**
  * 今日の保存数、合計保存数を更新する
@@ -18,7 +19,7 @@ export const todaySave = async (userId: string) => {
 
     // stringなら取得に成功している、falseなら失敗している
     if (typeof userInfo === 'string') {
-      const userInfoParse = JSON.parse(userInfo);
+      const userInfoParse = JSON.parse(userId);
       let todaySave: number, totalSave: number;
       if (userInfoParse.isRegister) {
         todaySave = parseInt(userInfoParse.data.todaySave) + 1;

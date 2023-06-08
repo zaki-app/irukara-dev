@@ -3,6 +3,7 @@ import { IsRegisterUser } from 'src/dynamodb/types';
 import { UserInfo } from 'src/dynamodb/types';
 import { jpDayjs } from 'src/common/timeFormat';
 import { UpperLimitParams } from 'src/dynamodb/types';
+import { createUserIdHash } from 'src/common/createHash';
 
 /**
  * ユーザーの送信数、保存数を特定の条件下でリセットする
@@ -14,6 +15,7 @@ export const isUpperLimit = async (
   userId: string,
   params: UpperLimitParams,
 ) => {
+  // ユーザーIDはハッシュ化する
   const userInfo: UserInfo = await isRegisterUser(userId);
 
   if (typeof userInfo === 'string') {
