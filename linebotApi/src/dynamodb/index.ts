@@ -6,6 +6,7 @@ import { todayCount } from './messageCount';
 import DynamoClient from 'src/dynamodb/client';
 // import dayjs from 'dayjs';
 import { jpDayjs } from 'src/common/timeFormat';
+import { createUserIdHash } from 'src/common/createHash';
 
 // dynamodbで何か処理が必要になった時のクラス
 export class ProcessingInDynamo {
@@ -85,10 +86,11 @@ export class ProcessingInDynamo {
    */
   async createMessage(event: any, replayText: string): Promise<any> {
     try {
-      // 保存する項目
+      // 保存する項目(ユーザーIDはハッシュ化する)
+      const hashUserId = createUserIdHash(event.source.userId);
       const params: SaveAnswerType = {
         messageId: event.replyToken,
-        userId: event.source.userId,
+        userId: hashUserId,
         lineUserId: event.source.userId,
         question: event.message.text,
         answer: replayText,

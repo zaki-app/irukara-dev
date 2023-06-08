@@ -5,6 +5,7 @@ import { marshall } from '@aws-sdk/util-dynamodb';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { UserInfo } from 'src/dynamodb/types';
 import { jpDayjs } from 'src/common/timeFormat';
+import { createUserIdHash } from 'src/common/createHash';
 
 /**
  * ユーザーの今日の送信回数、合計の送信回数をカウントする関数

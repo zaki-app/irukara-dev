@@ -22,6 +22,7 @@ export default class LineRichMenu {
       richMenuConfig,
     );
     console.log('リッチメニュー作成', richMenuId);
+    console.log('リッチメニュー設定', richMenuConfig.areas[0]);
     this.richMenuId = richMenuId;
 
     await this.setRichMenuImage();

@@ -33,6 +33,7 @@ import {
 import { todaySave } from 'src/dynamodb/messageSave';
 import { jpDayjs } from 'src/common/timeFormat';
 import { PostbackType, UserInfo } from 'src/dynamodb/types';
+import { createUserIdHash } from 'src/common/createHash';
 
 @Controller('linebot')
 export class LineBotController {
@@ -68,13 +69,16 @@ export class LineBotController {
         async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
           this.logger.log('event...', event);
 
-          // userIdが存在するか確認
+          // userId(hash化)が存在するか確認
+          const hashUserId = createUserIdHash(event.source.userId);
           const isRegister: UserInfo = await isRegisterUser(
-            event.source.userId,
+            // event.source.userId,
+            hashUserId,
           );
 
           // 登録がなかったら登録処理
-          if (!isRegister) await registerUser(event.source.userId);
+          // if (!isRegister) await registerUser(event.source.userId);
+          if (!isRegister) await registerUser(hashUserId);
 
           /**
            * postback以外の処理
@@ -82,7 +86,8 @@ export class LineBotController {
           if (event.type !== 'postback') {
             // 0::00になったらメッセージ上限のリセット
             const params = { todayCount: 0, todaySave: 0 };
-            const isLimit = await isUpperLimit(event.source.userId, params);
+            // const isLimit = await isUpperLimit(event.source.userId, params);
+            const isLimit = await isUpperLimit(hashUserId, params);
             console.log('message isLimit', isLimit);
             if (
               (isLimit.status === userStatus.free ||
@@ -143,7 +148,8 @@ export class LineBotController {
                   await new ProcessingInDynamo().updateMessage(postbackParse);
                 const updateResultParse = JSON.parse(updatedReferenceType);
                 // メッセージの保存回数を更新
-                await todaySave(updateResultParse.data.userId);
+                // await todaySave(updateResultParse.data.userId);
+                await todaySave(hashUserId);
               }
               // referenceの値によって返信するメッセージを変更
               const postbackMessage =
@@ -197,7 +203,10 @@ export class LineBotController {
           // 一度、回答をdynamodbに保存する
           await new ProcessingInDynamo().createMessage(event, replyText);
           // ユーザーテーブルの最終ログインを更新する
-          await updateUserInfo(event.source.userId, {
+          // await updateUserInfo(event.source.userId, {
+          //   lastLogin: jpDayjs().unix(),
+          // });
+          await updateUserInfo(hashUserId, {
             lastLogin: jpDayjs().unix(),
           });
 
@@ -218,7 +227,7 @@ export class LineBotController {
         },
       );
       const response = await Promise.all(results);
-      this.logger.log('最後のレスポンス', response);
+      console.log('最後のレスポンス', response);
 
       console.timeEnd('test');
       return response;
