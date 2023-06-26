@@ -10,7 +10,6 @@ import {
 import { UserInfo } from 'src/dynamodb/types';
 import { UpdateUserTable } from 'src/dynamodb/types';
 import { jpDayjs } from 'src/common/timeFormat';
-import { createUserIdHash } from 'src/common/createHash';
 
 /**
  * ユーザーが未登録なら登録する

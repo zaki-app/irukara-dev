@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { richMenuConfig } from './config';
-import { ClientConfig, RichMenu, Client } from '@line/bot-sdk';
+import { ClientConfig, Client } from '@line/bot-sdk';
 
 export default class LineRichMenu {
   private readonly lineClient: Client;
@@ -12,8 +12,6 @@ export default class LineRichMenu {
     };
 
     this.lineClient = new Client(lineConfig);
-    // this.createRichMenu();
-    // this.setRichMenuImage();
   }
 
   // リッチメニュー作成

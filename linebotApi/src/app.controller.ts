@@ -1,5 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-// import { AppService } from './app.service';
 
-@Controller('hello')
-export class AppController {}
+@Controller('api')
+export class AppController {
+  @Get('test')
+  testApi() {
+    const stage = process.env.NOW_STAGE;
+    return {
+      data: stage,
+    };
+  }
+}

@@ -13,14 +13,6 @@ provider:
   # ApiGateway
   httpApi:
     cors: true
-    # authorizers:
-    #   linebot-auth:
-    #     identitySource: '$request.header.Authorization'
-    #     issuerUrl: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_ACCESS_TOKEN_URL}
-    #     audience:
-    #       - ${self:custom.otherfile.environment.${self:provider.stage}.CHANNEL_SECRET}
-    #     type: jwt
-  # access log
   logs:
     httpApi: true
   # IAM
@@ -41,12 +33,13 @@ provider:
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UserTable
 
 custom:
-  defaultStage: dev
+  defaultStage: local
   otherfile:
     environment:
+      local: ${file(./env/local.yml)}
       dev: ${file(./env/dev.yml)}
-      stg: ${file(./env/stg.yml)}
-      prd: ${file(./env/prd.yml)}
+      staging: ${file(./env/stg.yml)}
+      production: ${file(./env/prd.yml)}
   serverless-layers:
     layersDeploymentBucket: ${self:provider.stage}-linebot-layer
   esbuild:
@@ -91,10 +84,9 @@ functions:
       DYNAMODB_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ENDPOINT}
       DYNAMODB_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_TABLE_NAME}
       DYNAMODB_USER_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_USER_TABLE_NAME}
-      LINEBOT_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_ENDPOINT}
       LINEBOT_CHANNEL_ID: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_CHANNEL_ID}
-      LINEBOT_ACCESS_TOKEN_URL: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_ACCESS_TOKEN_URL}
       LIFF_URL: ${self:custom.otherfile.environment.${self:provider.stage}.LIFF_URL}
+      NOW_STAGE: ${self:custom.otherfile.environment.${self:provider.stage}.NOW_STAGE}
     runtime: nodejs16.x
     memorySize: 512
     timeout: 30 #(m)
@@ -135,8 +127,6 @@ resources:
         KeySchema:
           - AttributeName: messageId
             KeyType: HASH
-          # - AttributeName: createdAt
-          #   KeyType: RANGE
         # GSの設定
         GlobalSecondaryIndexes:
           - IndexName: userIdIndex

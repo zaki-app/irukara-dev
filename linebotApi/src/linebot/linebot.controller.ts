@@ -71,13 +71,9 @@ export class LineBotController {
 
           // userId(hash化)が存在するか確認
           const hashUserId = createUserIdHash(event.source.userId);
-          const isRegister: UserInfo = await isRegisterUser(
-            // event.source.userId,
-            hashUserId,
-          );
+          const isRegister: UserInfo = await isRegisterUser(hashUserId);
 
           // 登録がなかったら登録処理
-          // if (!isRegister) await registerUser(event.source.userId);
           if (!isRegister) await registerUser(hashUserId);
 
           /**
