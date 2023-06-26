@@ -7,7 +7,7 @@ export const richMenuConfig: RichMenu = {
   },
   selected: false,
   name: 'irukara-rich-menu',
-  chatBarText: 'Irukala.com',
+  chatBarText: 'Irukala.net',
   areas: [
     {
       bounds: {
