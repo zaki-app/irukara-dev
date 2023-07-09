@@ -1,10 +1,5 @@
 import { Body, Controller, Post, Logger, Headers } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
-import {
-  TextMessage,
-  WebhookRequestBody,
-  MessageAPIResponseBase,
-} from '@line/bot-sdk';
 import { sorryQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
 import {
   fixedQuestions,
@@ -13,27 +8,31 @@ import {
 import { lineBotClient } from 'src/line/replyMessage/lineBotClient';
 import { sorryReply } from 'src/line/replyMessage/sorryReply';
 import { saveQuick } from 'src/line/quickReply.ts/saveQuick';
-import { ProcessingInDynamo } from 'src/dynamodb';
 import { LineBotReqEventDto } from './dto/linebot-req-event.dto';
 import LineRichMenu from 'src/line/richMenu';
 import LineInspection from 'src/common/lineInspection';
-import { isUpperLimit } from 'src/dynamodb/upperLimit';
-import {
-  isRegisterUser,
-  registerUser,
-  updateUserInfo,
-} from 'src/dynamodb/userRegister';
 import {
   userStatus,
-  userMessageLimit,
-  toUpperLimitMessage,
   toUpperLimitSaved,
   userSavedLimit,
 } from 'src/common/userStatus';
-import { todaySave } from 'src/dynamodb/messageSave';
-import { jpDayjs } from 'src/common/timeFormat';
-import { PostbackType, UserInfo } from 'src/dynamodb/types';
 import { createUserIdHash } from 'src/common/createHash';
+import {
+  isUpperLimit,
+  isRegisterUser,
+  registerUser,
+  updateSave,
+  updateCount,
+  updateMessage,
+  saveMessage,
+} from 'src/dynamodb';
+
+import type { UserInfo, PostbackType } from 'src/dynamodb/types';
+import type {
+  TextMessage,
+  WebhookRequestBody,
+  MessageAPIResponseBase,
+} from '@line/bot-sdk';
 
 @Controller('linebot')
 export class LineBotController {
@@ -53,7 +52,6 @@ export class LineBotController {
       signature,
       JSON.stringify(req),
     );
-    console.log('シグネチャ', isSignature);
     if (!isSignature) {
       console.error('不正なアクセス', isSignature);
       throw new Error('invalid signature');
@@ -62,49 +60,45 @@ export class LineBotController {
     // リッチメニューを適用
     await new LineRichMenu().createRichMenu();
 
+    this.logger.log('処理スタート');
     try {
       const events: any = req.events;
 
       const results: MessageAPIResponseBase[] = events.map(
         async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
-          this.logger.log('event...', event);
+          console.log('イベント', event);
 
-          // userId(hash化)が存在するか確認
+          // hash化したuserIdがuserTableにない場合は登録する
           const hashUserId = createUserIdHash(event.source.userId);
           const isRegister: UserInfo = await isRegisterUser(hashUserId);
-
-          // 登録がなかったら登録処理
           if (!isRegister) await registerUser(hashUserId);
 
-          /**
-           * postback以外の処理
-           */
+          /* postback以外の処理 通常の質問が来た時 */
           if (event.type !== 'postback') {
-            // 0::00になったらメッセージ上限のリセット
-            const params = { todayCount: 0, todaySave: 0 };
-            // const isLimit = await isUpperLimit(event.source.userId, params);
-            const isLimit = await isUpperLimit(hashUserId, params);
-            console.log('message isLimit', isLimit);
-            if (
-              (isLimit.status === userStatus.free ||
-                isLimit.status === userStatus.billingToFree) &&
-              isLimit.todayCount >= userMessageLimit.free
-            ) {
-              console.log(
-                `こちらのユーザー(${event.source.userId})はメッセージ上限に到達しました`,
-              );
-              return lineBotClient().replyMessage(event.replyToken, {
-                type: 'text',
-                text: toUpperLimitMessage.text,
-                // quickReply: {
-                //   items: sorryQuickReply,
-                // },
-              });
-            }
+            // ユーザーの送信回数を最初に見て制限だったらダメ、制限ないなら処理を続けるにしたほうがいい
+            // const params = { todayCount: 0, todaySave: 0 };
+            // const isLimit = await isUpperLimit(hashUserId, params);
+            // // console.log('message isLimit', isLimit);
+            // if (
+            //   (isLimit.status === userStatus.free ||
+            //     isLimit.status === userStatus.billingToFree) &&
+            //   isLimit.todayCount >= userMessageLimit.free
+            // ) {
+            //   console.log(
+            //     `こちらのユーザー(${event.source.userId})はメッセージ上限に到達しました`,
+            //   );
+            //   return lineBotClient().replyMessage(event.replyToken, {
+            //     type: 'text',
+            //     text: toUpperLimitMessage.text,
+            //     // quickReply: {
+            //     //   items: sorryQuickReply,
+            //     // },
+            //   });
+            // }
           }
 
           /**
-           * 基本的にpostback(保存するしないボタンクリック時)の処理
+           * postback(保存するしないボタンクリック時)の処理
            */
           if (event.type !== 'message' || event.message.type !== 'text') {
             if (event.type === 'postback') {
@@ -121,6 +115,7 @@ export class LineBotController {
                   postbackParse.userId,
                   params,
                 );
+                await updateSave(hashUserId);
                 console.log('saved count isLimit', isLimit);
 
                 if (
@@ -139,13 +134,8 @@ export class LineBotController {
                     // },
                   });
                 }
-                // referenceTypeの更新処理へ
-                const updatedReferenceType =
-                  await new ProcessingInDynamo().updateMessage(postbackParse);
-                const updateResultParse = JSON.parse(updatedReferenceType);
-                // メッセージの保存回数を更新
-                // await todaySave(updateResultParse.data.userId);
-                await todaySave(hashUserId);
+                // referenceTypeの更新
+                await updateMessage(postbackParse);
               }
               // referenceの値によって返信するメッセージを変更
               const postbackMessage =
@@ -181,7 +171,6 @@ export class LineBotController {
           const fixedQ = fixedQuestions;
           if (fixedQ.includes(event.message.text)) {
             const fixedA = fixedAnswer(event.message.text);
-            console.log('固定のやつ', fixedA);
             const saveBtn = fixedA.id === 1 ? await saveQuick(event) : [];
             const textMsg: TextMessage = {
               type: 'text',
@@ -194,17 +183,15 @@ export class LineBotController {
           // 質問からchatGPTの回答を得る
           const replyText = await this.lineBotService.chatGPTsAnswer(
             event.message.text,
+            hashUserId,
           );
 
-          // 一度、回答をdynamodbに保存する
-          await new ProcessingInDynamo().createMessage(event, replyText);
-          // ユーザーテーブルの最終ログインを更新する
-          // await updateUserInfo(event.source.userId, {
-          //   lastLogin: jpDayjs().unix(),
-          // });
-          await updateUserInfo(hashUserId, {
-            lastLogin: jpDayjs().unix(),
-          });
+          console.log('最新の質問の答え', replyText);
+
+          // 回答をmessageテーブルに保存
+          await saveMessage(event, replyText);
+          // userテーブルのカウントを更新
+          await updateCount(hashUserId);
 
           const quickItems = await saveQuick(event, replyText);
 
@@ -223,7 +210,6 @@ export class LineBotController {
         },
       );
       const response = await Promise.all(results);
-      console.log('最後のレスポンス', response);
 
       console.timeEnd('test');
       return response;
@@ -231,6 +217,8 @@ export class LineBotController {
       console.error(err);
       this.logger.error(`LineBotエラー: ${err}`);
       return err;
+    } finally {
+      this.logger.log('全ての処理が終了');
     }
   }
 }

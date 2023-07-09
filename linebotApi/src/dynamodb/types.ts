@@ -40,7 +40,7 @@ export interface IsRegisterUser {
 export interface SaveAnswerType {
   messageId: string;
   userId: string;
-  lineUserId: string;
+  shareStatus: number;
   question: string;
   answer: string;
   referenceType: number;
