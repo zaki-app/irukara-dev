@@ -1,9 +1,8 @@
-import { isRegisterUser, updateUserInfo } from 'src/dynamodb/userRegister';
+import { isRegisterUser, updateUserInfo } from 'src/dynamodb/user/userRegister';
 import { IsRegisterUser } from 'src/dynamodb/types';
 import { UserInfo } from 'src/dynamodb/types';
 import { jpDayjs } from 'src/common/timeFormat';
 import { UpperLimitParams } from 'src/dynamodb/types';
-import { createUserIdHash } from 'src/common/createHash';
 
 /**
  * ユーザーの送信数、保存数を特定の条件下でリセットする
@@ -15,7 +14,6 @@ export const isUpperLimit = async (
   userId: string,
   params: UpperLimitParams,
 ) => {
-  // ユーザーIDはハッシュ化する
   const userInfo: UserInfo = await isRegisterUser(userId);
 
   if (typeof userInfo === 'string') {
@@ -27,8 +25,8 @@ export const isUpperLimit = async (
 
     // 条件分岐
     if (
-      currentUnix > todayStartUnix &&
-      todayStartUnix > userInfoParse.data.lastLogin
+      currentUnix > todayStartUnix
+      // && todayStartUnix > userInfoParse.data.lastLogin
     ) {
       // 最終ログイン、更新日時
       params.lastLogin = jpDayjs().unix();

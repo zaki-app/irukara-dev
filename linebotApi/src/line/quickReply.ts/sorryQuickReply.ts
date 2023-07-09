@@ -13,16 +13,16 @@ export const sorryQuickReply: QuickReplyItem[] = [
     type: 'action',
     action: {
       type: 'message',
-      label: 'TapNoteは何ができるの？',
-      text: 'TapNoteは何ができるの？',
+      label: 'Irukaraは何ができるの？',
+      text: 'Irukaraは何ができるの？',
     },
   },
   {
     type: 'action',
     action: {
       type: 'message',
-      label: 'TapNoteは無料なの？',
-      text: 'TapNoteは無料なの？',
+      label: 'Irukaraは無料なの？',
+      text: 'Irukaraは無料なの？',
     },
   },
   // {

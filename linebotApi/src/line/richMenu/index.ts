@@ -21,6 +21,7 @@ export default class LineRichMenu {
     );
     console.log('リッチメニュー作成', richMenuId);
     console.log('リッチメニュー設定', richMenuConfig.areas[0]);
+    console.log('リッチメニューURL', process.env.LIFF_URL);
     this.richMenuId = richMenuId;
 
     await this.setRichMenuImage();

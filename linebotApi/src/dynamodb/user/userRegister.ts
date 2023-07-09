@@ -1,7 +1,6 @@
-import { UserInfoType } from './types';
+import { UserInfoType } from '../types';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
-// import dayjs from 'dayjs';
 import DynamoClient from 'src/dynamodb/client';
 import {
   TransactWriteItemsCommand,
@@ -63,7 +62,7 @@ export const registerUser = async (userId: string): Promise<string> => {
 };
 
 /**
- * ユーザーIDから登録済みかどうか判定する
+ * ユーザーIDから登録済みかどうか判定しtrueならユーザー情報を返却する
  * @param userId
  * @returns IsRegisterUser
  */

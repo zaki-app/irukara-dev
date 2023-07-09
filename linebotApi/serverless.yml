@@ -31,6 +31,8 @@ provider:
           Resource:
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UserTable
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable/index/userIdIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable/index/referenceIndex
 
 custom:
   defaultStage: local
@@ -74,7 +76,7 @@ functions:
   main:
     handler: dist/main.handler
     name: ${self:provider.stage}-irukara_api
-    description: '${self:provider.stage} irukaraのメイン関数(Nest.js)'
+    description: '${self:provider.stage} LINEBOT用のメイン関数(Nest.js)'
     environment:
       CHANNEL_ACCESS_TOKEN: ${self:custom.otherfile.environment.${self:provider.stage}.CHANNEL_ACCESS_TOKEN}
       CHANNEL_SECRET: ${self:custom.otherfile.environment.${self:provider.stage}.CHANNEL_SECRET}
@@ -113,13 +115,11 @@ resources:
         AttributeDefinitions:
           - AttributeName: messageId # PK
             AttributeType: S
-          # - AttributeName: createdAt # SK
-          #   AttributeType: N
           # GS
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: lineUserId
-            AttributeType: S
+          - AttributeName: shareStatus
+            AttributeType: N
           - AttributeName: referenceType
             AttributeType: N
           - AttributeName: memberStatus
@@ -135,9 +135,9 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性
-          - IndexName: lineUserIdIndex
+          - IndexName: shareStatusIndex
             KeySchema:
-              - AttributeName: lineUserId
+              - AttributeName: shareStatus
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性

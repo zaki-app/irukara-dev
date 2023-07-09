@@ -1,21 +1,20 @@
 import DynamoClient from 'src/dynamodb/client';
 import { UserInfo } from 'src/dynamodb/types';
-import { isRegisterUser } from 'src/dynamodb/userRegister';
+import { isRegisterUser } from 'src/dynamodb/user/userRegister';
 import { marshall } from '@aws-sdk/util-dynamodb';
-// import dayjs from 'dayjs';
 import { jpDayjs } from 'src/common/timeFormat';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
-import { createUserIdHash } from 'src/common/createHash';
 
 /**
  * 今日の保存数、合計保存数を更新する
  * @param userId
  */
-export const todaySave = async (userId: string) => {
+export const updateSave = async (userId: string) => {
   try {
     const client = DynamoClient();
     // ユーザー情報を取得する
     const userInfo: UserInfo = await isRegisterUser(userId);
+    console.log('update userinfo', userInfo);
 
     // stringなら取得に成功している、falseなら失敗している
     if (typeof userInfo === 'string') {
@@ -37,11 +36,12 @@ export const todaySave = async (userId: string) => {
                 userId: userId,
               }),
               UpdateExpression:
-                'SET todaySave = :value1, totalSave = :value2, updatedAt = :value3',
+                'SET todaySave = :value1, totalSave = :value2, lastLogin = :value3, updatedAt = :value4',
               ExpressionAttributeValues: marshall({
                 ':value1': todaySave,
                 ':value2': totalSave,
                 ':value3': jpDayjs().unix(),
+                ':value4': jpDayjs().unix(),
               }),
             },
           },

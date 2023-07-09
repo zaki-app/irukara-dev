@@ -16,18 +16,18 @@ export const userStatus = {
  * １日に送信できるメッセージの上限
  */
 export const userMessageLimit = {
-  free: 15,
+  free: 50,
   billing: 100,
-  billingToFree: 15,
+  billingToFree: 50,
 };
 
 /**
  * 1日に保存できる上限
  */
 export const userSavedLimit = {
-  free: 3,
+  free: 5,
   billing: 100,
-  billingToFree: 3,
+  billingToFree: 5,
 };
 
 /**

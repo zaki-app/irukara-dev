@@ -4,12 +4,9 @@
  * @returns
  */
 export const sorryReply = (event: any) => {
-  console.log('謝罪時のイベント', event);
-
   // postbackの時
   if (event.type === 'postback') {
     const parseData = event.postback.data;
-    const result = JSON.parse(parseData);
     console.log('ポストバックの結果', parseData.action);
     // return `ポストバックです！ ${result.action}`;
     return;
