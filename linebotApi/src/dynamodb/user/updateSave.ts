@@ -1,8 +1,8 @@
 import DynamoClient from 'src/dynamodb/client';
 import { UserInfo } from 'src/dynamodb/types';
-import { isRegisterUser } from 'src/dynamodb/user/userRegister';
+import { isRegisterUser } from 'src/dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import { jpDayjs } from 'src/common/timeFormat';
+import { jpDayjs } from 'src/common';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 
 /**
@@ -18,7 +18,7 @@ export const updateSave = async (userId: string) => {
 
     // stringなら取得に成功している、falseなら失敗している
     if (typeof userInfo === 'string') {
-      const userInfoParse = JSON.parse(userId);
+      const userInfoParse = JSON.parse(userInfo);
       let todaySave: number, totalSave: number;
       if (userInfoParse.isRegister) {
         todaySave = parseInt(userInfoParse.data.todaySave) + 1;

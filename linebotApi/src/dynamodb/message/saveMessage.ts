@@ -1,8 +1,8 @@
-import { createUserIdHash } from 'src/common/createHash';
-import { jpDayjs } from 'src/common/timeFormat';
+import { createUserIdHash, jpDayjs } from 'src/common';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { updateCount } from 'src/dynamodb';
+import DynamoClient from 'src/dynamodb/client';
 
 import type { SaveAnswerType } from '../types';
 
@@ -44,7 +44,7 @@ export async function saveMessage(
     };
 
     // メッセージの保存
-    await this.dynamoDB.send(new TransactWriteItemsCommand(transactItem));
+    await DynamoClient().send(new TransactWriteItemsCommand(transactItem));
 
     // ユーザーの送信カウントを1増加させる
     const userCount = await updateCount(event.source.userId);

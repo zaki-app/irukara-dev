@@ -1,12 +1,15 @@
-import { PostbackType, UserInfo } from 'src/dynamodb/types';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import { jpDayjs } from 'src/common/timeFormat';
+import { jpDayjs } from 'src/common';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
-import { isRegisterUser } from 'src/dynamodb';
+import { updateSave } from 'src/dynamodb';
+import DynamoClient from 'src/dynamodb/client';
+
+import type { PostbackType } from 'src/dynamodb/types';
 
 /**
  * 保存するボタンクリック後の更新処理
- * referenceType, todaySave, totalSave, lastLogin, updatedAtを更新
+ * messageテーブルからreferenceType更新
+ * userテーブルからtodaySave, totalSave更新
  * @param data
  * @returns
  */
@@ -14,18 +17,6 @@ import { isRegisterUser } from 'src/dynamodb';
 export async function updateMessage(data: PostbackType) {
   console.log('更新処理の時', data.messageId);
   try {
-    const userInfo: UserInfo = await isRegisterUser(data.messageId);
-    if (typeof userInfo === 'string') {
-      const userInfoParse = JSON.parse(data.messageId);
-      console.log('更新処理userInfoParse', userInfoParse);
-      let todaySave: number, totalSave: number;
-      if (userInfoParse.isRegister) {
-        todaySave = parseInt(userInfoParse.data.todaySave) + 1;
-        totalSave = parseInt(userInfoParse.data.totalSave) + 1;
-        console.log('save count', todaySave, totalSave);
-      }
-    }
-
     const params = {
       TransactItems: [
         {
@@ -45,28 +36,20 @@ export async function updateMessage(data: PostbackType) {
       ],
     };
 
+    // messageテーブルのreferenceType更新
     const command = new TransactWriteItemsCommand(params);
+    await DynamoClient().send(command);
 
-    // メッセージ保存処理
-    try {
-      await this.dynamoDB.send(command);
-      // 保存カウント用にuserIdを追加
-      data['userId'] = data.userId;
-      const response = JSON.stringify({
-        statusCode: 200,
-        data: data,
-      });
+    // userテーブルの保存回数更新
+    const updateSaveCount = await updateSave(data.userId);
+    console.log('保存回数更新', updateSaveCount);
 
-      return response;
-    } catch (err) {
-      const response = JSON.stringify({
-        message: 'Faild to Update...',
-        errorMsg: err.message,
-        errorStack: err.errorStack,
-      });
+    const response = JSON.stringify({
+      statusCode: 200,
+      data: data,
+    });
 
-      return response;
-    }
+    return response;
   } catch (err) {
     const response = JSON.stringify({
       message: 'dynamodb以外でエラー',

@@ -17,7 +17,7 @@ export interface UserInfoType {
 }
 
 // user存在確認
-export interface IsRegisterUser {
+export interface RegisterUserData {
   data: {
     userId: string;
     subUserId: string;

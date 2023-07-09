@@ -1,8 +1,10 @@
-import { isRegisterUser, updateUserInfo } from 'src/dynamodb/user/userRegister';
-import { IsRegisterUser } from 'src/dynamodb/types';
-import { UserInfo } from 'src/dynamodb/types';
-import { jpDayjs } from 'src/common/timeFormat';
-import { UpperLimitParams } from 'src/dynamodb/types';
+import { isRegisterUser, updateUserInfo } from 'src/dynamodb';
+import { jpDayjs } from 'src/common';
+import type {
+  RegisterUserData,
+  UserInfo,
+  UpperLimitParams,
+} from 'src/dynamodb/types';
 
 /**
  * ユーザーの送信数、保存数を特定の条件下でリセットする
@@ -17,7 +19,7 @@ export const isUpperLimit = async (
   const userInfo: UserInfo = await isRegisterUser(userId);
 
   if (typeof userInfo === 'string') {
-    const userInfoParse: IsRegisterUser = JSON.parse(userInfo);
+    const userInfoParse: RegisterUserData = JSON.parse(userInfo);
     console.log('upperLimit対象データ', userInfoParse);
 
     const currentUnix: number = jpDayjs().unix();

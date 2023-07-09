@@ -5,7 +5,7 @@ import {
   Configuration,
   OpenAIApi,
 } from 'openai';
-import { getPastMessage } from 'src/dynamodb/message/getPastMessage';
+import { getPastMessage } from 'src/dynamodb';
 
 @Injectable()
 export class LineBotService {
@@ -29,7 +29,7 @@ export class LineBotService {
     // 質問を投げる
     const setQuestion = {
       model: process.env.CHATGPT_MODEL,
-      max_tokens: 500,
+      max_tokens: 400,
       // この値が高いほどめちゃくちゃな文章になるらしい
       temperature: 0,
       // 生成された文章に含まれる単語の確率分布の上位何割までを考慮するかを指定します。
@@ -41,7 +41,7 @@ export class LineBotService {
       messages: [
         {
           role: 'system',
-          content: `あなたの名前は「イルカラ」です。親切に回答をしてください。時には絵文字や顔文字を使って回答してください`,
+          content: `あなたの名前は「イルカラ」です。親切に簡潔に回答をしてください。時には絵文字や顔文字を使って回答してください`,
         },
         {
           role: 'system',
