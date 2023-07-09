@@ -1,4 +1,3 @@
-import { UserInfoType } from '../types';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 import DynamoClient from 'src/dynamodb/client';
@@ -6,9 +5,13 @@ import {
   TransactWriteItemsCommand,
   GetItemCommand,
 } from '@aws-sdk/client-dynamodb';
-import { UserInfo } from 'src/dynamodb/types';
-import { UpdateUserTable } from 'src/dynamodb/types';
-import { jpDayjs } from 'src/common/timeFormat';
+import { jpDayjs } from 'src/common';
+
+import type {
+  UpdateUserTable,
+  UserInfo,
+  UserInfoType,
+} from 'src/dynamodb/types';
 
 /**
  * ユーザーが未登録なら登録する

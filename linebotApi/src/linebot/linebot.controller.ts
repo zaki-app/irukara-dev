@@ -10,18 +10,10 @@ import { sorryReply } from 'src/line/replyMessage/sorryReply';
 import { saveQuick } from 'src/line/quickReply.ts/saveQuick';
 import { LineBotReqEventDto } from './dto/linebot-req-event.dto';
 import LineRichMenu from 'src/line/richMenu';
-import LineInspection from 'src/common/lineInspection';
+import { createUserIdHash, LineInspection } from 'src/common';
 import {
-  userStatus,
-  toUpperLimitSaved,
-  userSavedLimit,
-} from 'src/common/userStatus';
-import { createUserIdHash } from 'src/common/createHash';
-import {
-  isUpperLimit,
   isRegisterUser,
   registerUser,
-  updateSave,
   updateCount,
   updateMessage,
   saveMessage,
@@ -98,7 +90,7 @@ export class LineBotController {
           }
 
           /**
-           * postback(保存するしないボタンクリック時)の処理
+           * postback(保存する・しないボタンクリック時)の処理
            */
           if (event.type !== 'message' || event.message.type !== 'text') {
             if (event.type === 'postback') {
@@ -110,31 +102,31 @@ export class LineBotController {
               // 保存するボタンクック時
               if (postbackParse.referenceType === 1) {
                 // 0::00になったら保存上限のリセット
-                const params = { todaySave: 0, totalSave: 0 };
-                const isLimit = await isUpperLimit(
-                  postbackParse.userId,
-                  params,
-                );
-                await updateSave(hashUserId);
-                console.log('saved count isLimit', isLimit);
+                // const params = { todaySave: 0, totalSave: 0 };
+                // const isLimit = await isUpperLimit(
+                //   postbackParse.userId,
+                //   params,
+                // );
+                // const result = await updateSave(hashUserId);
+                // console.log('saved count isLimit', result);
 
-                if (
-                  (isLimit.status === userStatus.free ||
-                    isLimit.status === userStatus.billingToFree) &&
-                  isLimit.todaySave >= userSavedLimit.free
-                ) {
-                  console.log(
-                    `こちらのユーザー(${postbackParse.userId})は保存回数上限に到達しました`,
-                  );
-                  return lineBotClient().replyMessage(event.replyToken, {
-                    type: 'text',
-                    text: toUpperLimitSaved.text,
-                    // quickReply: {
-                    //   items: sorryQuickReply,
-                    // },
-                  });
-                }
-                // referenceTypeの更新
+                // if (
+                //   (isLimit.status === userStatus.free ||
+                //     isLimit.status === userStatus.billingToFree) &&
+                //   isLimit.todaySave >= userSavedLimit.free
+                // ) {
+                //   console.log(
+                //     `こちらのユーザー(${postbackParse.userId})は保存回数上限に到達しました`,
+                //   );
+                //   return lineBotClient().replyMessage(event.replyToken, {
+                //     type: 'text',
+                //     text: toUpperLimitSaved.text,
+                //     // quickReply: {
+                //     //   items: sorryQuickReply,
+                //     // },
+                //   });
+                // }
+                // referenceType, 保存回数の更新
                 await updateMessage(postbackParse);
               }
               // referenceの値によって返信するメッセージを変更
@@ -190,7 +182,7 @@ export class LineBotController {
 
           // 回答をmessageテーブルに保存
           await saveMessage(event, replyText);
-          // userテーブルのカウントを更新
+          // userテーブルのメッセージカウントを更新
           await updateCount(hashUserId);
 
           const quickItems = await saveQuick(event, replyText);

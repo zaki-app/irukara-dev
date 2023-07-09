@@ -1,6 +1,6 @@
 import { QueryCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
-import DynamoClient from '../client';
+import DynamoClient from 'src/dynamodb/client';
 import lodash from 'lodash';
 import {
   ChatCompletionRequestMessage,
@@ -29,8 +29,8 @@ export async function getPastMessage(userId: string) {
 
   const items = Items.map((item) => unmarshall(item));
   const sortItems = lodash.orderBy(items, ['createdAt'], ['desc']);
-  // 上位10件に絞り込み
-  const limitItems = sortItems.slice(0, 5);
+  // 上位4件に絞り込み
+  const limitItems = sortItems.slice(0, 4);
   const sortAsc = lodash.orderBy(limitItems, ['createdAt'], ['asc']);
   const history = sortAsc.flatMap((item) => [
     {

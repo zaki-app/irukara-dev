@@ -1,8 +1,8 @@
 import DynamoClient from 'src/dynamodb/client';
 import { isRegisterUser } from 'src/dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { marshall } from '@aws-sdk/util-dynamodb';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
-import { jpDayjs } from 'src/common/timeFormat';
+import { jpDayjs } from 'src/common';
 import type { UserInfo } from 'src/dynamodb/types';
 
 /**

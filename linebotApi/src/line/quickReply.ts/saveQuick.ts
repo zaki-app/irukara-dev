@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { QuickReplyItem } from '@line/bot-sdk';
-import { createUserIdHash } from 'src/common/createHash';
+import { createUserIdHash } from 'src/common';
 
 /**
  * 回答返信後に表示する保存クイックリプライ

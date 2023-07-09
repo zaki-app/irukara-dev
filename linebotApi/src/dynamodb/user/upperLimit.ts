@@ -1,8 +1,10 @@
-import { isRegisterUser, updateUserInfo } from 'src/dynamodb/user/userRegister';
-import { IsRegisterUser } from 'src/dynamodb/types';
-import { UserInfo } from 'src/dynamodb/types';
-import { jpDayjs } from 'src/common/timeFormat';
-import { UpperLimitParams } from 'src/dynamodb/types';
+import { isRegisterUser, updateUserInfo } from 'src/dynamodb';
+import { jpDayjs } from 'src/common';
+import type {
+  IsRegisterUser,
+  UserInfo,
+  UpperLimitParams,
+} from 'src/dynamodb/types';
 
 /**
  * ユーザーの送信数、保存数を特定の条件下でリセットする
