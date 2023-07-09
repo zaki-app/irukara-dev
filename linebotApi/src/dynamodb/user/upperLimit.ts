@@ -1,7 +1,7 @@
 import { isRegisterUser, updateUserInfo } from 'src/dynamodb';
 import { jpDayjs } from 'src/common';
 import type {
-  IsRegisterUser,
+  RegisterUserData,
   UserInfo,
   UpperLimitParams,
 } from 'src/dynamodb/types';
@@ -19,7 +19,7 @@ export const isUpperLimit = async (
   const userInfo: UserInfo = await isRegisterUser(userId);
 
   if (typeof userInfo === 'string') {
-    const userInfoParse: IsRegisterUser = JSON.parse(userInfo);
+    const userInfoParse: RegisterUserData = JSON.parse(userInfo);
     console.log('upperLimit対象データ', userInfoParse);
 
     const currentUnix: number = jpDayjs().unix();

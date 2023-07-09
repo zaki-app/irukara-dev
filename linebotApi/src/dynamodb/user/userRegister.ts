@@ -67,7 +67,7 @@ export const registerUser = async (userId: string): Promise<string> => {
 /**
  * ユーザーIDから登録済みかどうか判定しtrueならユーザー情報を返却する
  * @param userId
- * @returns IsRegisterUser
+ * @returns RegisterUserData
  */
 export const isRegisterUser = async (userId: string): Promise<UserInfo> => {
   try {
