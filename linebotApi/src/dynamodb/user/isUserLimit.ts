@@ -7,10 +7,10 @@ export async function isUserLimit({
 }: RegisterUserData): Promise<boolean> {
   console.log('渡ってきたユーザーさん', data);
   // 明日の0:00を取得↓
-  // const currentUnix = jpDayjs().add(1, 'day').startOf('day').unix();
+  const currentUnix = jpDayjs().add(2, 'day').startOf('day').unix();
 
   // 今日の0:00を取得
-  const currentUnix = jpDayjs().startOf('day').unix();
+  // const currentUnix = jpDayjs().startOf('day').unix();
 
   // まず現在時間よりlastLoginが
   // 毎回０にならないように実装しないといけない

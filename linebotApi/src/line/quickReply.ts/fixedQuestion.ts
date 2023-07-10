@@ -1,10 +1,10 @@
 export const fixedQuestions = [
   '使い方を教えて',
+  'Irukaraは何ができるの？',
+  'Irukaraは無料なの？',
+  'イルカラの使い方を教えて',
   'イルカラは何ができるの？',
   'イルカラは無料なの？',
-  '参考になったで保存',
-  '参考にならなかったで保存',
-  '保存しない',
 ];
 
 export const fixedAnswer = (question: string) => {
