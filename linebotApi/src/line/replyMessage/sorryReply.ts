@@ -21,7 +21,6 @@ export const sorryReply = (event: any) => {
   } else if (event.message.type === 'location') {
     return "お！地図ですね！\n私も旅行に行ってみたいです(ｏ'∀')ﾉ";
   } else {
-    console.log('postbackに入りました');
     return 'せっかく送ってくれたんですが、まだ対応できてないんです。\nテキストメッセージならご質問にお応えできます！\n対応できるまで暫しお待ちを！';
   }
 };
