@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Logger, Headers } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
-import { sorryQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
+import { fixedQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
 import {
   fixedQuestions,
   fixedAnswer,
@@ -70,20 +70,56 @@ export class LineBotController {
           const isRegister: UserInfo = await isRegisterUser(hashUserId);
           if (!isRegister) await registerUser(hashUserId);
 
-          // 固定の質問が来た時
-          if (fixedQuestions.includes(event.message.text)) {
-            const fixedA = fixedAnswer(event.message.text);
-            const textMsg: TextMessage = {
+          /* postback 保存・保存しないボタン押下 */
+          if (event.type === 'postback') {
+            const postbackParse: PostbackType = JSON.parse(event.postback.data);
+            console.log('postback', postbackParse);
+
+            await updateMessage(postbackParse);
+
+            const postbackMessage =
+              postbackParse.referenceType === 1
+                ? '保存しました😋'
+                : '保存しませんでした🌀';
+            const textMessage: TextMessage = {
               type: 'text',
-              text: fixedA.text,
+              text: postbackMessage,
               quickReply: {
-                items: sorryQuickReply,
+                items: fixedQuickReply,
               },
             };
-            return lineBotClient().replyMessage(event.replyToken, textMsg);
+
+            return lineBotClient().replyMessage(event.replyToken, textMessage);
+          } else if (
+            event.message.type === 'image' ||
+            event.message.type === 'video' ||
+            event.message.type === 'sticker' ||
+            event.message.type === 'location'
+          ) {
+            /* スタンプ・画像・ビデオの時謝罪メッセージを返却 */
+            console.log('ステッカー');
+            const replySorry = sorryReply(event);
+            return lineBotClient().replyMessage(event.replyToken, {
+              type: 'text',
+              text: replySorry,
+              quickReply: {
+                items: fixedQuickReply,
+              },
+            });
           } else {
-            // 今日のメッセージ回数・保存回数から処理を進められるか判断
-            if (typeof isRegister === 'string') {
+            /* 固定の質問場合 */
+            if (fixedQuestions.includes(event.message.text)) {
+              const fixedA = fixedAnswer(event.message.text);
+              const textMsg: TextMessage = {
+                type: 'text',
+                text: fixedA.text,
+                quickReply: {
+                  items: fixedQuickReply,
+                },
+              };
+              return lineBotClient().replyMessage(event.replyToken, textMsg);
+            } else if (typeof isRegister === 'string') {
+              /* 通常の質問の場合 */
               const userInfo = JSON.parse(isRegister);
               const userLimit = await isUserLimit(userInfo);
               console.log('ユーザーはまだ遊べるか？', userLimit);
@@ -92,85 +128,12 @@ export class LineBotController {
                   type: 'text',
                   text: toUpperLimitMessage.text,
                   quickReply: {
-                    items: sorryQuickReply,
+                    items: fixedQuickReply,
                   },
                 });
-              } else {
+              } else if (event.message.type === 'text') {
                 // TODO isUserLimitを使用しているところは最初に取得したデータを使い回したい
                 /* postback以外の処理 通常の質問が来た時 */
-                if (event.type !== 'postback') {
-                }
-
-                /**
-                 * postback(保存する・しないボタンクリック時)の処理
-                 */
-                if (event.type !== 'message' || event.message.type !== 'text') {
-                  if (event.type === 'postback') {
-                    const postbackParse: PostbackType = JSON.parse(
-                      event.postback.data,
-                    );
-                    console.log('postback', postbackParse);
-
-                    // 保存するボタンクック時
-                    if (postbackParse.referenceType === 1) {
-                      // 0::00になったら保存上限のリセット
-                      // const params = { todaySave: 0, totalSave: 0 };
-                      // const isLimit = await isUpperLimit(
-                      //   postbackParse.userId,
-                      //   params,
-                      // );
-                      // const result = await updateSave(hashUserId);
-                      // console.log('saved count isLimit', result);
-
-                      // if (
-                      //   (isLimit.status === userStatus.free ||
-                      //     isLimit.status === userStatus.billingToFree) &&
-                      //   isLimit.todaySave >= userSavedLimit.free
-                      // ) {
-                      //   console.log(
-                      //     `こちらのユーザー(${postbackParse.userId})は保存回数上限に到達しました`,
-                      //   );
-                      //   return lineBotClient().replyMessage(event.replyToken, {
-                      //     type: 'text',
-                      //     text: toUpperLimitSaved.text,
-                      //     // quickReply: {
-                      //     //   items: sorryQuickReply,
-                      //     // },
-                      //   });
-                      // }
-                      // referenceType, 保存回数の更新
-                      await updateMessage(postbackParse);
-                    }
-                    // referenceの値によって返信するメッセージを変更
-                    const postbackMessage =
-                      postbackParse.referenceType === 1
-                        ? '保存しました😋'
-                        : '保存しませんでした🌀';
-                    const textMessage: TextMessage = {
-                      type: 'text',
-                      text: postbackMessage,
-                    };
-
-                    return lineBotClient().replyMessage(
-                      event.replyToken,
-                      textMessage,
-                    );
-                  } else {
-                    /**
-                     * postback以外のメッセージの場合謝罪メッセージを返す
-                     */
-                    const replySorry = sorryReply(event);
-
-                    return lineBotClient().replyMessage(event.replyToken, {
-                      type: 'text',
-                      text: replySorry,
-                      quickReply: {
-                        items: sorryQuickReply,
-                      },
-                    });
-                  }
-                }
-
                 // 質問からchatGPTの回答を得る
                 const replyText = await this.lineBotService.chatGPTsAnswer(
                   event.message.text,
@@ -198,6 +161,8 @@ export class LineBotController {
                   event.replyToken,
                   textMessage,
                 );
+              } else {
+                // 何にも該当しなかった場合のメッセージを入れる
               }
             }
           }
@@ -210,6 +175,7 @@ export class LineBotController {
     } catch (err) {
       console.error(err);
       this.logger.error(`LineBotエラー: ${err}`);
+      // エラーの時も何かメッセージを入れたい
       return err;
     } finally {
       this.logger.log('全ての処理が終了');

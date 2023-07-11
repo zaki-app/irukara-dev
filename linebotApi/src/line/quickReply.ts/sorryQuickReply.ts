@@ -1,6 +1,6 @@
 import { QuickReplyItem } from '@line/bot-sdk';
 
-export const sorryQuickReply: QuickReplyItem[] = [
+export const fixedQuickReply: QuickReplyItem[] = [
   {
     type: 'action',
     action: {
