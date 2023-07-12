@@ -1,33 +1,33 @@
 name: deploy tap-note develop
 # developブランチにプッシュされたら実行される
 on:
-  push:
-    branches: [develop]
+    push:
+        branches: [develop]
 
 # workflowの実行
 jobs:
-  deploy:
-    name: deploy
+    deploy:
+        name: deploy
 
-    # jobが実行されるrunnner
-    runs-on: ubuntu-latest
+        # jobが実行されるrunnner
+        runs-on: ubuntu-latest
 
-    # Step 一連の流れ
-    steps:
-      - uses: actions/checkout@v2
+        # Step 一連の流れ
+        steps:
+            - uses: actions/checkout@v2
 
-      - name: use node.js 16x
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16.x
+            - name: use node.js 16x
+              uses: actions/setup-node@v2
+              with:
+                  node-version: 16.x
 
-      - name: npm install
-        run: npm install
+            - name: npm install
+              run: npm install && npm build --webpack
 
-      - name: serverless deploy --stage dev
-        uses: serverless/github-action@master
-        with:
-          args: deploy
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            - name: serverless deploy --stage dev
+              uses: serverless/github-action@master
+              with:
+                  args: deploy
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
