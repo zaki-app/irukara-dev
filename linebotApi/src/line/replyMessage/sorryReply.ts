@@ -24,3 +24,11 @@ export const sorryReply = (event: any) => {
     return 'せっかく送ってくれたんですが、まだ対応できてないんです。\nテキストメッセージならご質問にお応えできます！\n対応できるまで暫しお待ちを！';
   }
 };
+
+export const notTextMessage = [
+  'image',
+  'video',
+  'sticker',
+  'audio',
+  'location',
+];

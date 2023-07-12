@@ -1,13 +1,8 @@
 import { Body, Controller, Post, Logger, Headers } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
 import { fixedQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
-import {
-  fixedQuestions,
-  fixedAnswer,
-} from 'src/line/quickReply.ts/fixedQuestion';
+import { fixedQuestions } from 'src/line/quickReply.ts/fixedQuestion';
 import { lineBotClient } from 'src/line/replyMessage/lineBotClient';
-import { sorryReply } from 'src/line/replyMessage/sorryReply';
-import { saveQuick } from 'src/line/quickReply.ts/saveQuick';
 import { LineBotReqEventDto } from './dto/linebot-req-event.dto';
 import LineRichMenu from 'src/line/richMenu';
 import {
@@ -18,18 +13,19 @@ import {
 import {
   isRegisterUser,
   registerUser,
-  updateCount,
   updateMessage,
-  saveMessage,
   isUserLimit,
 } from 'src/dynamodb';
+import { replyReferenceType } from 'src/reply/postback';
+import { imageModeText } from 'src/imageGeneration/generationMode';
+import { imageProcess } from 'src/imageGeneration/imageProcess';
+import { notSupported } from 'src/reply/notSupported';
+import { answer } from 'src/reply/answer';
+import { fixed } from 'src/reply/fixed';
+import { notTextMessage } from 'src/line/replyMessage/sorryReply';
 
 import type { UserInfo, PostbackType } from 'src/dynamodb/types';
-import type {
-  TextMessage,
-  WebhookRequestBody,
-  MessageAPIResponseBase,
-} from '@line/bot-sdk';
+import type { WebhookRequestBody, MessageAPIResponseBase } from '@line/bot-sdk';
 
 @Controller('linebot')
 export class LineBotController {
@@ -76,53 +72,32 @@ export class LineBotController {
             console.log('postback', postbackParse);
 
             await updateMessage(postbackParse);
-
-            const postbackMessage =
-              postbackParse.referenceType === 1
-                ? '保存しました😋'
-                : '保存しませんでした🌀';
-            const textMessage: TextMessage = {
-              type: 'text',
-              text: postbackMessage,
-              quickReply: {
-                items: fixedQuickReply,
-              },
-            };
+            const textMessage = replyReferenceType(postbackParse.referenceType);
 
             return lineBotClient().replyMessage(event.replyToken, textMessage);
-          } else if (
-            event.message.type === 'image' ||
-            event.message.type === 'video' ||
-            event.message.type === 'sticker' ||
-            event.message.type === 'location'
-          ) {
+          } else if (notTextMessage.includes(event.message.type)) {
             /* スタンプ・画像・ビデオの時謝罪メッセージを返却 */
-            console.log('ステッカー');
-            const replySorry = sorryReply(event);
-            return lineBotClient().replyMessage(event.replyToken, {
-              type: 'text',
-              text: replySorry,
-              quickReply: {
-                items: fixedQuickReply,
-              },
-            });
+            const sorry = notSupported(event);
+            return lineBotClient().replyMessage(event.replyToken, sorry);
           } else {
             /* 固定の質問場合 */
             if (fixedQuestions.includes(event.message.text)) {
-              const fixedA = fixedAnswer(event.message.text);
-              const textMsg: TextMessage = {
-                type: 'text',
-                text: fixedA.text,
-                quickReply: {
-                  items: fixedQuickReply,
-                },
-              };
-              return lineBotClient().replyMessage(event.replyToken, textMsg);
+              const textMessage = fixed(event.message.text);
+              return lineBotClient().replyMessage(
+                event.replyToken,
+                textMessage,
+              );
+            } else if (imageModeText.includes(event.message.text)) {
+              /* 画像生成モード */
+              const reply = imageProcess();
+              console.log('何が帰ってくる？', reply);
+              return lineBotClient().replyMessage(event.replyToken, reply);
             } else if (typeof isRegister === 'string') {
               /* 通常の質問の場合 */
               const userInfo = JSON.parse(isRegister);
               const userLimit = await isUserLimit(userInfo);
               console.log('ユーザーはまだ遊べるか？', userLimit);
+              // TODO ファイルわけはリミットの実装終わってから
               if (!userLimit) {
                 return lineBotClient().replyMessage(event.replyToken, {
                   type: 'text',
@@ -132,7 +107,6 @@ export class LineBotController {
                   },
                 });
               } else if (event.message.type === 'text') {
-                // TODO isUserLimitを使用しているところは最初に取得したデータを使い回したい
                 /* postback以外の処理 通常の質問が来た時 */
                 // 質問からchatGPTの回答を得る
                 const replyText = await this.lineBotService.chatGPTsAnswer(
@@ -140,22 +114,7 @@ export class LineBotController {
                   hashUserId,
                 );
 
-                console.log('最新の質問の答え', replyText);
-
-                // 回答をmessageテーブルに保存
-                await saveMessage(event, replyText);
-                // userテーブルのメッセージカウントを更新
-                await updateCount(hashUserId);
-
-                const quickItems = await saveQuick(event, replyText);
-
-                const textMessage: TextMessage = {
-                  type: 'text',
-                  text: replyText,
-                  quickReply: {
-                    items: quickItems,
-                  },
-                };
+                const textMessage = await answer(hashUserId, event, replyText);
 
                 return await lineBotClient().replyMessage(
                   event.replyToken,
