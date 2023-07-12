@@ -46,6 +46,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "dayjs": "^1.11.7",
+    "loadash": "^1.0.0",
     "localtunnel": "^2.0.2",
     "openai": "^3.2.1",
     "reflect-metadata": "^0.1.13",

@@ -38,3 +38,6 @@ env*
 docker/dynamodb/*
 csv-data
 appConfig/*
+
+# 追加
+appConfig
