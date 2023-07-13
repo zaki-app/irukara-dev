@@ -29,10 +29,15 @@ provider:
             - 'dynamodb:UpdateItem'
             - 'dynamodb:DeleteItem'
           Resource:
-            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable
-            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UserTable
-            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable/index/userIdIndex
-            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessageTable/index/referenceIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UsersTable
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable/index/userIdIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable/index/referenceIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/userIdIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/userIdIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/referenceIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/modeIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UsersTable/index/modeIndex
 
 custom:
   defaultStage: local
@@ -99,20 +104,17 @@ functions:
       - httpApi:
           method: ANY
           path: /
-          # authorizer:
-          #   name: linebot-auth
       - httpApi:
           method: ANY
           path: /{proxy+}
-          # cors: true
 
 # DynamoDBの作成
 resources:
   Resources:
-    MessageTable:
+    MessagesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.stage}-MessageTable # DynamoDBテーブル名
+        TableName: ${self:provider.stage}-MessagesTable # DynamoDBテーブル名
         AttributeDefinitions:
           - AttributeName: messageId # PK
             AttributeType: S
@@ -156,18 +158,73 @@ resources:
               ProjectionType: ALL # 射影される属性
         # オンデマンドモードを指定
         BillingMode: PAY_PER_REQUEST
-    # ユーザーテーブル
-    UserTable:
+    ImagesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.stage}-UserTable # DynamoDBテーブル名
+        TableName: ${self:provider.stage}-ImagesTable # DynamoDBテーブル名
+        AttributeDefinitions:
+          - AttributeName: imageId # PK
+            AttributeType: S
+          # GS
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: shareStatus
+            AttributeType: N
+          - AttributeName: referenceType
+            AttributeType: N
+          - AttributeName: mode
+            AttributeType: N
+          - AttributeName: memberStatus
+            AttributeType: N
+        KeySchema:
+          - AttributeName: imageId
+            KeyType: HASH
+        # GSの設定
+        GlobalSecondaryIndexes:
+          - IndexName: userIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: shareStatusIndex
+            KeySchema:
+              - AttributeName: shareStatus
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: referenceIndex
+            KeySchema:
+              - AttributeName: referenceType
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: modeIndex
+            KeySchema:
+              - AttributeName: mode
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: memberStatusIndex
+            KeySchema:
+              - AttributeName: memberStatus
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+        # オンデマンドモードを指定
+        BillingMode: PAY_PER_REQUEST
+    # ユーザーテーブル
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.stage}-UsersTable # DynamoDBテーブル名
         AttributeDefinitions:
           - AttributeName: userId # PK
             AttributeType: S
           # GS
-          - AttributeName: subUserId
-            AttributeType: S
           - AttributeName: status
+            AttributeType: N
+          - AttributeName: mode
             AttributeType: N
           - AttributeName: createdAt
             AttributeType: N
@@ -176,15 +233,15 @@ resources:
             KeyType: HASH
         # GSの設定
         GlobalSecondaryIndexes:
-          - IndexName: subUserIdIndex
-            KeySchema:
-              - AttributeName: subUserId
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
           - IndexName: statusIndex
             KeySchema:
               - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: modeIndex
+            KeySchema:
+              - AttributeName: mode
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性

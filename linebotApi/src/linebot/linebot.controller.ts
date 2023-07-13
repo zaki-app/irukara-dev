@@ -65,6 +65,9 @@ export class LineBotController {
           const hashUserId = createUserIdHash(event.source.userId);
           const isRegister: UserInfo = await isRegisterUser(hashUserId);
           if (!isRegister) await registerUser(hashUserId);
+          console.log('登録状況', isRegister);
+
+          // ユーザーのmodeを確認
 
           /* postback 保存・保存しないボタン押下 */
           if (event.type === 'postback') {
@@ -92,21 +95,22 @@ export class LineBotController {
               const reply = imageProcess();
               console.log('何が帰ってくる？', reply);
               return lineBotClient().replyMessage(event.replyToken, reply);
-            } else if (typeof isRegister === 'string') {
+            } else {
               /* 通常の質問の場合 */
-              const userInfo = JSON.parse(isRegister);
-              const userLimit = await isUserLimit(userInfo);
-              console.log('ユーザーはまだ遊べるか？', userLimit);
+              // const userInfo = JSON.parse(isRegister);
+              // const userLimit = await isUserLimit(userInfo);
+              // console.log('ユーザーはまだ遊べるか？', userLimit);
               // TODO ファイルわけはリミットの実装終わってから
-              if (!userLimit) {
-                return lineBotClient().replyMessage(event.replyToken, {
-                  type: 'text',
-                  text: toUpperLimitMessage.text,
-                  quickReply: {
-                    items: fixedQuickReply,
-                  },
-                });
-              } else if (event.message.type === 'text') {
+              // if (!userLimit) {
+              //   return lineBotClient().replyMessage(event.replyToken, {
+              //     type: 'text',
+              //     text: toUpperLimitMessage.text,
+              //     quickReply: {
+              //       items: fixedQuickReply,
+              //     },
+              //   });
+              // }
+              if (event.message.type === 'text') {
                 /* postback以外の処理 通常の質問が来た時 */
                 // 質問からchatGPTの回答を得る
                 const replyText = await this.lineBotService.chatGPTsAnswer(
@@ -122,6 +126,7 @@ export class LineBotController {
                 );
               } else {
                 // 何にも該当しなかった場合のメッセージを入れる
+                console.log('何もなかった');
               }
             }
           }

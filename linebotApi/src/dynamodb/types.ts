@@ -3,14 +3,13 @@
 // user情報
 export interface UserInfoType {
   userId: string;
-  subUserId: string;
+  mode: number;
   status: number;
   todayCount?: number;
   totalCount?: number;
   todaySave?: number;
   totalSave?: number;
   lastLogin?: number;
-  accessToken?: string;
   createdAt: number;
   updatedAt?: number;
   deletedAt?: number;
@@ -18,20 +17,7 @@ export interface UserInfoType {
 
 // user存在確認
 export interface RegisterUserData {
-  data: {
-    userId: string;
-    subUserId: string;
-    status: number;
-    todayCount?: number;
-    totalCount?: number;
-    todaySave?: number;
-    totalSave?: number;
-    lastLogin?: number;
-    accessToken?: string;
-    createdAt: number;
-    updatedAt?: number;
-    deletedAt?: number;
-  };
+  data: UserInfoType;
   isRegister: boolean;
 }
 
@@ -39,6 +25,7 @@ export interface RegisterUserData {
 // 型定義
 export interface SaveAnswerType {
   messageId: string;
+  mode: number;
   userId: string;
   shareStatus: number;
   question: string;
@@ -53,15 +40,14 @@ export type UserInfo = string | boolean;
 
 // ユーザーテーブル更新のparams
 export interface UpdateUserTable {
-  subUserId?: string;
-  status?: number;
+  mode: number;
+  status: number;
   todayCount?: number;
   totalCount?: number;
   todaySave?: number;
   totalSave?: number;
   lastLogin?: number;
-  accessToken?: string;
-  createdAt?: number;
+  createdAt: number;
   updatedAt?: number;
   deletedAt?: number;
 }
