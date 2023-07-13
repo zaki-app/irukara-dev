@@ -5,7 +5,7 @@ import { updateMessage } from 'src/dynamodb/message/updateSaveMessage';
 
 import { updateCount } from 'src/dynamodb/user/updateCount';
 import { updateSave } from 'src/dynamodb/user/updateSave';
-import { isUpperLimit } from 'src/dynamodb/user/upperLimit';
+// import { isUpperLimit } from 'src/dynamodb/user/upperLimit';
 import { isUserLimit } from './user/isUserLimit';
 import {
   registerUser,
@@ -19,7 +19,7 @@ export {
   updateMessage,
   updateCount,
   updateSave,
-  isUpperLimit,
+  // isUpperLimit,
   isUserLimit,
   registerUser,
   isRegisterUser,
