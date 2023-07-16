@@ -1,43 +1,37 @@
 import * as fs from 'fs';
-import { richMenuConfig } from './config';
-import { ClientConfig, Client } from '@line/bot-sdk';
+import { leftMenu } from 'src/line/richMenu/left';
+import { rightMenu } from 'src/line/richMenu/right';
+import { lineBotClient } from '../replyMessage/lineBotClient';
 
-export default class LineRichMenu {
-  private readonly lineClient: Client;
-  private richMenuId: string;
+export default async function LineRichMenu() {
+  const client = lineBotClient();
 
-  constructor() {
-    const lineConfig: ClientConfig = {
-      channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-    };
+  try {
+    const leftId = await client.createRichMenu(leftMenu);
+    const rightId = await client.createRichMenu(rightMenu);
+    console.log('Get rich-menu id is...', leftId, rightId);
+    console.log('rich-menu list...', await client.getRichMenuList());
 
-    this.lineClient = new Client(lineConfig);
+    // 画像をアップロード
+    const leftImage = fs.createReadStream('src/assets/left-com.png');
+    await client.setRichMenuImage(leftId, leftImage);
+    const rightImage = fs.createReadStream('src/assets/right-com.png');
+    await client.setRichMenuImage(rightId, rightImage);
+    console.log('image upload success...');
+
+    // デフォルトを設定
+    await client.setDefaultRichMenu(leftId);
+    console.log('set default rich-menu success...');
+    // タブの設定
+    await client.createRichMenuAlias(leftId, 'alias-left');
+    await client.createRichMenuAlias(rightId, 'alias-right');
+    console.log('rich-menu alias is ...', await client.getRichMenuAliasList());
+    console.log('rich-menu success!');
+  } catch (err) {
+    console.error('error in rich-menu...', err);
+  } finally {
+    console.log('リッチメニューの処理終了');
   }
-
-  // リッチメニュー作成
-  async createRichMenu(): Promise<void> {
-    const richMenuId: string = await this.lineClient.createRichMenu(
-      richMenuConfig,
-    );
-    console.log('リッチメニュー作成', richMenuId);
-    console.log('リッチメニュー設定', richMenuConfig.areas[0]);
-    console.log('リッチメニューURL', process.env.LIFF_URL);
-    this.richMenuId = richMenuId;
-
-    await this.setRichMenuImage();
-    await this.setDefaultRichMenu();
-    console.log('リッチ', this.richMenuId);
-  }
-
-  // 画像を設定する
-  async setRichMenuImage(): Promise<void> {
-    const image = fs.createReadStream('src/assets/richmenu.png');
-    await this.lineClient.setRichMenuImage(this.richMenuId, image);
-  }
-
-  // デフォルトのリッチメニューを設定
-  async setDefaultRichMenu(): Promise<void> {
-    const result = await this.lineClient.setDefaultRichMenu(this.richMenuId);
-    console.log('デフォルト', result);
-  }
+  console.log('rich-menu id is...', await client.getRichMenuList());
+  console.log('rich-menu alias is...', await client.getRichMenuAliasList());
 }
