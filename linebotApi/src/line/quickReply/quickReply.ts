@@ -25,12 +25,23 @@ export const fixedQuickReply: QuickReplyItem[] = [
       text: 'Irukaraは無料なの？',
     },
   },
-  // {
-  //   type: 'action',
-  //   action: {
-  //     type: 'postback',
-  //     label: 'no',
-  //     data: '{"action":"no"}',
-  //   },
-  // },
 ];
+
+// モード変更時
+export function modeChangeReply(messages): QuickReplyItem[] {
+  console.log('引数', messages);
+  const replies = [];
+  messages.forEach((item: string) => {
+    replies.push({
+      type: 'action',
+      action: {
+        type: 'message',
+        label: item,
+        text: item,
+      },
+    });
+  });
+
+  console.log('モードのリプライ', replies);
+  return replies;
+}

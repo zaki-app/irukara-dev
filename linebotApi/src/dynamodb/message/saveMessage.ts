@@ -22,6 +22,7 @@ export async function saveMessage(
     const params: SaveAnswerType = {
       messageId: event.replyToken,
       userId: hashUserId,
+      mode: 0,
       shareStatus: 0,
       question: event.message.text,
       answer: replayText,

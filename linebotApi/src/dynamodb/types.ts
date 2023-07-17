@@ -3,14 +3,13 @@
 // user情報
 export interface UserInfoType {
   userId: string;
-  subUserId: string;
+  mode: number;
   status: number;
   todayCount?: number;
   totalCount?: number;
   todaySave?: number;
   totalSave?: number;
   lastLogin?: number;
-  accessToken?: string;
   createdAt: number;
   updatedAt?: number;
   deletedAt?: number;
@@ -18,27 +17,14 @@ export interface UserInfoType {
 
 // user存在確認
 export interface RegisterUserData {
-  data: {
-    userId: string;
-    subUserId: string;
-    status: number;
-    todayCount?: number;
-    totalCount?: number;
-    todaySave?: number;
-    totalSave?: number;
-    lastLogin?: number;
-    accessToken?: string;
-    createdAt: number;
-    updatedAt?: number;
-    deletedAt?: number;
-  };
+  data: UserInfoType;
   isRegister: boolean;
 }
 
-// メッセージ保存
-// 型定義
+// メッセージテーブル保存
 export interface SaveAnswerType {
   messageId: string;
+  mode: number;
   userId: string;
   shareStatus: number;
   question: string;
@@ -53,25 +39,29 @@ export type UserInfo = string | boolean;
 
 // ユーザーテーブル更新のparams
 export interface UpdateUserTable {
-  subUserId?: string;
-  status?: number;
+  mode: number;
+  status: number;
   todayCount?: number;
   totalCount?: number;
   todaySave?: number;
   totalSave?: number;
   lastLogin?: number;
-  accessToken?: string;
-  createdAt?: number;
+  createdAt: number;
   updatedAt?: number;
   deletedAt?: number;
 }
 
-// postback時の型
-export interface PostbackType {
+// referenceType更新(postback)
+export interface ReferenceTypeProps {
   userId?: string;
   messageId: string;
   referenceType: number;
   createdAt: number;
+}
+
+// モード選択時(postback)
+export interface ModeSelectTypeProps {
+  mode: number;
 }
 
 // メッセージ送信、postbackでの上限をリセット

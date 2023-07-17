@@ -25,7 +25,7 @@ export const registerUser = async (userId: string): Promise<string> => {
 
     const params: UserInfoType = {
       userId: userId,
-      subUserId: uuidv4(),
+      mode: 0,
       status: 0,
       todayCount: 0,
       totalCount: 0,
