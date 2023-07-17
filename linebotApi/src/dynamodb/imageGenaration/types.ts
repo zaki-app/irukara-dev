@@ -55,3 +55,28 @@ export interface AnythingV4Response {
     file_prefix: string;
   };
 }
+
+export interface ImageSaveProps {
+  imageId: string;
+  hashUserId: string;
+  prompt: string;
+  imageUrl: string;
+  mode: number;
+  createdAt: number;
+}
+
+// イメージテーブル
+export interface SaveImageType {
+  imageId: string;
+  userId: string;
+  shareStatus: number;
+  prompt: string;
+  imageUrl: string;
+  referenceType: number;
+  good: number;
+  mode: number;
+  memberStatus: number;
+  createdAt: number;
+  updatedAt?: number;
+  deletedAt?: number;
+}

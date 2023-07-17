@@ -2,6 +2,7 @@
 import { createUserIdHash } from 'src/common/createHash';
 import LineInspection from 'src/common/lineInspection';
 import { jpDayjs } from 'src/common/timeFormat';
+import { createUUID } from 'src/common/createUUID';
 import {
   userStatus,
   userMessageLimit,
@@ -14,6 +15,7 @@ export {
   createUserIdHash,
   LineInspection,
   jpDayjs,
+  createUUID,
   userStatus,
   userMessageLimit,
   userSavedLimit,
