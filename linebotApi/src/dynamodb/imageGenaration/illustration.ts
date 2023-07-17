@@ -1,15 +1,22 @@
 import type {
   AnythingV4Response,
   BodyParams,
+  ImageSaveProps,
 } from 'src/dynamodb/imageGenaration/types';
 import fetch from 'node-fetch';
 import { ImageMessage, TextMessage } from '@line/bot-sdk';
+import { isImageSave } from 'src/line/quickReply/imageSave';
+import { createUUID, jpDayjs } from 'src/common';
+import { imageSaveError } from 'src/reply/error';
+
+type ReturnType = [ImageMessage, TextMessage] | TextMessage;
 
 // テキストからイラストを生成する
 export async function illustration(
   hashUserId: string,
   text: string,
-): Promise<[ImageMessage, TextMessage]> {
+): Promise<ReturnType> {
+  let returnReply;
   try {
     const bodyParams: BodyParams = {
       key: process.env.STABLE_DIFFUSION_API_KEY,
@@ -42,14 +49,25 @@ export async function illustration(
     const response = await fetch(endpoint, options);
     const data = (await response.json()) as AnythingV4Response;
 
-    let imageUrl;
+    let imageUrl: string;
     if (data.status === 'success') {
       imageUrl = data.output[0];
     }
 
-    //
+    // imageテーブルに保存する
+    const saveProps: ImageSaveProps = {
+      imageId: createUUID(),
+      hashUserId,
+      prompt: text,
+      imageUrl: data.output[0],
+      mode: 1,
+      createdAt: jpDayjs().unix(),
+    };
+    const saveResponse = await isImageSave(saveProps);
+    console.log('保存結果', saveResponse);
 
-    return [
+    // replyメッセージ
+    const success = [
       {
         type: 'image',
         originalContentUrl: imageUrl,
@@ -63,7 +81,17 @@ export async function illustration(
         // }
       },
     ];
+
+    const errorReply = {
+      type: 'text',
+      text: imageSaveError(saveProps.prompt) ?? '',
+    };
+
+    returnReply = saveResponse ? success : errorReply;
   } catch (err) {
     console.error('illustration generation error...', err);
+
+    returnReply = imageSaveError();
   }
+  return returnReply;
 }

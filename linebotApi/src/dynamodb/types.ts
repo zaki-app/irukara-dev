@@ -21,8 +21,7 @@ export interface RegisterUserData {
   isRegister: boolean;
 }
 
-// メッセージ保存
-// 型定義
+// メッセージテーブル保存
 export interface SaveAnswerType {
   messageId: string;
   mode: number;
