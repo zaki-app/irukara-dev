@@ -18,6 +18,8 @@ export interface BodyParams {
   track_id: string | null;
   // AnythingV4
   model_id?: string;
+  // real
+  enhance_prompt?: string;
 }
 
 // AnythingV4のレスポンス

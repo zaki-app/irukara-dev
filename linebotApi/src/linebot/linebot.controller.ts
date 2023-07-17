@@ -19,7 +19,7 @@ import type { WebhookRequestBody, MessageAPIResponseBase } from '@line/bot-sdk';
 import { getMode } from 'src/dynamodb/user/getUserInfo';
 import { follow } from 'src/reply/follow';
 import LineRichMenu from 'src/line/richMenu';
-import { illustration } from 'src/dynamodb/imageGenaration/illustration';
+import { generation } from 'src/dynamodb/imageGenaration/generation';
 
 @Controller('linebot')
 export class LineBotController {
@@ -111,7 +111,11 @@ export class LineBotController {
           /* 画像生成モード選択時 */
           if ([1, 2].includes(currentMode.mode)) {
             console.log('現在は画像モードの時の処理');
-            const reply = await illustration(hashUserId, event.message.text);
+            const reply = await generation(
+              hashUserId,
+              event.message.text,
+              currentMode.mode,
+            );
             return await lineBotClient().replyMessage(event.replyToken, reply);
           } else if (currentMode.mode !== 9999) {
             /* postback以外の処理 通常の質問が来た時 */
