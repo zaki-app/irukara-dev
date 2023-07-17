@@ -53,7 +53,6 @@ custom:
     bundle: true
     minify: false
     sourcemap: true
-    # exclude: aws-sdk
     target: node16
     define: 'require.resolve: undefined'
     platform: node
@@ -68,7 +67,7 @@ custom:
       convertEmptyValues: false
       noStart: true # dynamodb-localを二重に起動しない
 
-# dist配下のみデプロイする
+# dist配下と画像のみデプロイする
 package:
   individually: true
   include:
@@ -91,6 +90,7 @@ functions:
       DYNAMODB_ENDPOINT: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_ENDPOINT}
       DYNAMODB_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_TABLE_NAME}
       DYNAMODB_USER_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_USER_TABLE_NAME}
+      DYNAMODB_IMAGE_TABLE_NAME: ${self:custom.otherfile.environment.${self:provider.stage}.DYNAMODB_IMAGE_TABLE_NAME}
       LINEBOT_CHANNEL_ID: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_CHANNEL_ID}
       LIFF_URL: ${self:custom.otherfile.environment.${self:provider.stage}.LIFF_URL}
       STABLE_DIFFUSION_API_KEY: ${self:custom.otherfile.environment.${self:provider.stage}.STABLE_DIFFUSION_API_KEY}

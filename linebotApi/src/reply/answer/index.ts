@@ -1,6 +1,6 @@
 import { TextMessage } from '@line/bot-sdk';
 import { saveMessage, updateCount } from 'src/dynamodb';
-import { saveQuick } from 'src/line/quickReply.ts/saveQuick';
+import { saveQuick } from 'src/line/quickReply/saveQuick';
 
 export async function answer(
   hashUserId: string,

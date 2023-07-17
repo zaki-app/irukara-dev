@@ -52,12 +52,17 @@ export interface UpdateUserTable {
   deletedAt?: number;
 }
 
-// postback時の型
-export interface PostbackType {
+// referenceType更新(postback)
+export interface ReferenceTypeProps {
   userId?: string;
   messageId: string;
   referenceType: number;
   createdAt: number;
+}
+
+// モード選択時(postback)
+export interface ModeSelectTypeProps {
+  mode: number;
 }
 
 // メッセージ送信、postbackでの上限をリセット

@@ -4,7 +4,7 @@ import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { updateSave } from 'src/dynamodb';
 import DynamoClient from 'src/dynamodb/client';
 
-import type { PostbackType } from 'src/dynamodb/types';
+import type { ReferenceTypeProps } from 'src/dynamodb/types';
 
 /**
  * 保存するボタンクリック後の更新処理
@@ -14,7 +14,7 @@ import type { PostbackType } from 'src/dynamodb/types';
  * @returns
  */
 
-export async function updateMessage(data: PostbackType) {
+export async function updateMessage(data: ReferenceTypeProps) {
   console.log('更新処理の時', data.messageId);
   try {
     const params = {

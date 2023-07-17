@@ -1,5 +1,5 @@
 import { TextMessage } from '@line/bot-sdk';
-import { fixedQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
+import { fixedQuickReply } from 'src/line/quickReply/quickReply';
 import { sorryReply } from 'src/line/replyMessage/sorryReply';
 
 export function notSupported(event: any): TextMessage {

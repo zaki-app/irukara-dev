@@ -1,6 +1,6 @@
 import { TextMessage } from '@line/bot-sdk';
-import { fixedAnswer } from 'src/line/quickReply.ts/fixedQuestion';
-import { fixedQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
+import { fixedAnswer } from 'src/line/quickReply/fixedQuestion';
+import { fixedQuickReply } from 'src/line/quickReply/quickReply';
 
 export function fixed(text: string): TextMessage {
   const fixedA = fixedAnswer(text);

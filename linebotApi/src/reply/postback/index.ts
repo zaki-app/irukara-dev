@@ -1,16 +1,28 @@
 import { TextMessage } from '@line/bot-sdk';
-import { fixedQuickReply } from 'src/line/quickReply.ts/sorryQuickReply';
+import { updateReferenceType } from 'src/reply/postback/updateReferenceType';
+import { updateMode } from 'src/reply/postback/updateMode';
 
-export function replyReferenceType(referenceType: number): TextMessage {
-  const saveStatus =
-    referenceType === 1 ? '保存しました😋' : '保存しませんでした🌀';
+export async function postbackProcess(
+  postbackParse,
+  hashUserId,
+): Promise<TextMessage> {
+  console.log('渡ってきた値', postbackParse);
+  const modeNumber = [0, 1, 2];
 
-  // 保存状況を返却
-  return {
-    type: 'text',
-    text: saveStatus,
-    quickReply: {
-      items: fixedQuickReply,
-    },
-  };
+  // referenceTypeの更新
+  let response;
+  if (postbackParse.referenceType) {
+    response = await updateReferenceType(postbackParse);
+  } else if (modeNumber.includes(postbackParse.mode)) {
+    console.log('モード', postbackParse.mode);
+    response = await updateMode(hashUserId, postbackParse.mode);
+  }
+  // else if (postbackParse.mode === 1) {
+  //   console.log('イラストモード');
+  // } else if (postbackParse.mode === 2) {
+  //   console.log('リアルモード');
+  // }
+
+  // reply内容を返却
+  return response;
 }
