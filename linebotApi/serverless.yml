@@ -30,13 +30,18 @@ provider:
             - 'dynamodb:DeleteItem'
           Resource:
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UsersTable
+            # MessagesTableのインデックス
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable/index/userIdIndex
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable/index/referenceIndex
+            # ImagesTableのインデックス
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/userIdIndex
-            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/userIdIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/shareStatusIndex
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/referenceIndex
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/modeIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/memberStatusIndex
+            # UsersTableのインデックス
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UsersTable/index/modeIndex
 
 custom:
