@@ -5,7 +5,7 @@ export const leftMenu: RichMenu = {
     width: 2500,
     height: 1686,
   },
-  selected: false,
+  selected: true,
   name: 'Irukara-left-rich-menu',
   chatBarText: 'Irukaraメニュー',
   areas: [
@@ -19,8 +19,9 @@ export const leftMenu: RichMenu = {
       },
       action: {
         type: 'postback',
-        displayText: 'chat-mode',
-        data: 'mode=0',
+        data: JSON.stringify({
+          mode: 0,
+        }),
       },
     },
     // illustration
@@ -33,8 +34,9 @@ export const leftMenu: RichMenu = {
       },
       action: {
         type: 'postback',
-        displayText: 'illustration-mode',
-        data: 'mode=1',
+        data: JSON.stringify({
+          mode: 1,
+        }),
       },
     },
     // real
@@ -47,8 +49,9 @@ export const leftMenu: RichMenu = {
       },
       action: {
         type: 'postback',
-        displayText: 'real-mode',
-        data: 'mode=2',
+        data: JSON.stringify({
+          mode: 2,
+        }),
       },
     },
     // irukara.net

@@ -8,7 +8,6 @@ export async function isUpdateMode(
   userId: string,
   imageMode: number,
 ): Promise<boolean> {
-  console.log('引数', userId, imageMode);
   let response: boolean;
   try {
     const params = {

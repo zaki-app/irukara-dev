@@ -5,7 +5,7 @@ export const rightMenu: RichMenu = {
     width: 2500,
     height: 1686,
   },
-  selected: false,
+  selected: true,
   name: 'Irukara right Rich Menu',
   chatBarText: 'Irukaraメニュー',
   areas: [

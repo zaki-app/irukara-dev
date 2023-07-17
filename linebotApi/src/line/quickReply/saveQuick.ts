@@ -26,7 +26,6 @@ export const saveQuick = async (
         label: '保存する',
         // dataは最大300文字の制限あり
         data: JSON.stringify({
-          // userId: event.source.userId,
           userId: hashUserId,
           messageId: event.replyToken,
           referenceType: 1,
@@ -40,7 +39,6 @@ export const saveQuick = async (
         type: 'postback',
         label: '保存しない',
         data: JSON.stringify({
-          // userId: event.source.userId,
           userId: hashUserId,
           messageId: event.replyToken,
           referenceType: 2,

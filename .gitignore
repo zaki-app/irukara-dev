@@ -42,3 +42,8 @@ appConfig/*
 # 追加
 appConfig
 docs
+richmenu/secret
+richmenu/package.json
+richmenu/package-lock.json
+richmenu/dev-remove.js
+richmenu/stg-remove.js
