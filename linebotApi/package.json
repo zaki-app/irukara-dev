@@ -11,7 +11,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "dev": "nest build --webpack && npx serverless offline --httpPort 6000 --stage local",
+    "dev": "nest build --webpack && npx serverless offline --httpPort 6000 --aws-profile irukara-dev --stage local",
     "develop": "nest build --webpack && npx serverless offline --httpPort 6000 --stage dev",
     "stg": "nest build --webpack && npx serverless offline --httpPort 6000 --stage stg",
     "prd": "nest build --webpack && npx serverless offline --httpPort 6000 --stage prd",
@@ -37,6 +37,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.303.0",
+    "@aws-sdk/client-eventbridge": "^3.370.0",
+    "@aws-sdk/client-scheduler": "^3.370.0",
     "@aws-sdk/lib-dynamodb": "^3.303.0",
     "@aws-sdk/util-dynamodb": "^3.303.0",
     "@line/bot-sdk": "^7.5.2",
