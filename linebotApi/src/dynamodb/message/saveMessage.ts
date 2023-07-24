@@ -1,10 +1,11 @@
 import { createUserIdHash, jpDayjs } from 'src/common';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import { updateCount } from 'src/dynamodb';
 import DynamoClient from 'src/dynamodb/client';
 
-import type { SaveAnswerType } from '../types';
+import type { MessageTable } from 'src/types/message';
+import { MessageCounts } from 'src/types/user';
+import { updateUser } from '../user/updateUser';
 
 /**
  * 質問と回答を保存する
@@ -15,11 +16,13 @@ import type { SaveAnswerType } from '../types';
 export async function saveMessage(
   event: any,
   replayText: string,
+  messageCount: MessageCounts,
 ): Promise<any> {
+  let response;
   try {
     // 保存する項目(ユーザーIDはハッシュ化する)
     const hashUserId = createUserIdHash(event.source.userId);
-    const params: SaveAnswerType = {
+    const params: MessageTable = {
       messageId: event.replyToken,
       userId: hashUserId,
       mode: 0,
@@ -47,22 +50,23 @@ export async function saveMessage(
     // メッセージの保存
     await DynamoClient().send(new TransactWriteItemsCommand(transactItem));
 
-    // ユーザーの送信カウントを1増加させる
-    const userCount = await updateCount(event.source.userId);
-    console.log('ユーザーカウント', userCount);
+    // ユーザーのメッセージカウントを更新
+    const userMessageCount = await updateUser(hashUserId, messageCount);
+    console.log('メッセージカウント', userMessageCount);
 
-    const answerResponse = JSON.stringify({
+    response = JSON.stringify({
       statusCode: 200,
       body: {
         data: params,
       },
     });
-    return answerResponse;
   } catch (err) {
-    return JSON.stringify({
+    console.log('message save error...', err);
+    response = JSON.stringify({
       statusCode: 500,
       message: err.message,
       stack: err.stack,
     });
   }
+  return response;
 }

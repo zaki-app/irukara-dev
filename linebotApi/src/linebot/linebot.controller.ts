@@ -2,24 +2,30 @@ import { Body, Controller, Post, Logger, Headers } from '@nestjs/common';
 import { LineBotService } from './linebot.service';
 import { fixedQuestions } from 'src/line/quickReply/fixedQuestion';
 import { lineBotClient } from 'src/line/replyMessage/lineBotClient';
-import { LineBotReqEventDto } from './dto/linebot-req-event.dto';
 import { createUserIdHash, LineInspection } from 'src/common';
 import { isRegisterUser, registerUser } from 'src/dynamodb';
 import { imageModeText } from 'src/imageGeneration/generationMode';
 import { imageProcess } from 'src/imageGeneration/imageProcess';
 import { notTextMessage } from 'src/line/replyMessage/sorryReply';
 import { postbackProcess, notSupported, answer, fixed } from 'src/reply';
-
-import type {
-  UserInfo,
-  ReferenceTypeProps,
-  ModeSelectTypeProps,
-} from 'src/dynamodb/types';
-import type { WebhookRequestBody, MessageAPIResponseBase } from '@line/bot-sdk';
 import { getMode } from 'src/dynamodb/user/getUserInfo';
 import { follow } from 'src/reply/follow';
 import LineRichMenu from 'src/line/richMenu';
 import { generation } from 'src/dynamodb/imageGenaration/generation';
+
+import type {
+  UserInfo,
+  ModeSelectTypeProps,
+  CurrentUser,
+} from 'src/types/user';
+import type { MessageReferenceTypeProps } from 'src/types/message';
+import type {
+  WebhookRequestBody,
+  MessageAPIResponseBase,
+  RichMenuResponse,
+  WebhookEvent,
+  TextEventMessage,
+} from '@line/bot-sdk';
 
 @Controller('linebot')
 export class LineBotController {
@@ -33,10 +39,10 @@ export class LineBotController {
     @Headers('x-line-signature') signature: string,
     @Body() req: WebhookRequestBody,
   ): Promise<any> {
+    console.log('リクエスト', req);
     try {
-      console.time('test');
       // 著名の検証
-      const isSignature = new LineInspection().verifySignature(
+      const isSignature: boolean = new LineInspection().verifySignature(
         signature,
         JSON.stringify(req),
       );
@@ -46,97 +52,134 @@ export class LineBotController {
       }
 
       this.logger.log('処理スタート');
-      console.log('ステージ', process.env.NOW_STAGE);
+      console.log('現在のステージ', process.env.NOW_STAGE);
       // リッチメニューがない場合は作成
-      const richMenuCount = await lineBotClient().getRichMenuList();
+      const richMenuCount: RichMenuResponse[] =
+        await lineBotClient().getRichMenuList();
       if (richMenuCount.length === 0) {
         await LineRichMenu();
       }
-      const events: any = req.events;
+      const events: WebhookEvent[] = req.events;
 
-      const results: MessageAPIResponseBase[] = events.map(
-        async (event: LineBotReqEventDto): Promise<MessageAPIResponseBase> => {
+      const results = events.map(
+        async (event: WebhookEvent): Promise<MessageAPIResponseBase> => {
           console.log('イベント', event);
 
           // hash化したuserIdがuserTableにない場合は登録する
           const hashUserId = createUserIdHash(event.source.userId);
+          // 全体で使用するデータ
           const isRegister: UserInfo = await isRegisterUser(hashUserId);
           if (!isRegister) await registerUser(hashUserId);
-          console.log('登録状況', isRegister);
+          const currentUser: CurrentUser =
+            typeof isRegister === 'string' && JSON.parse(isRegister);
+          console.log('登録状況', currentUser.data);
+          const currentMode = await getMode(hashUserId);
+          console.log('現在のモード', currentMode);
 
-          // フォローしてくれた時
+          /* フォローしてくれた時 */
           if (event.type === 'follow') {
             const followMessage = follow();
             return lineBotClient().replyMessage(
               event.replyToken,
               followMessage,
             );
-          }
-          // TODOフォロー解除の時
-          if (event.type === 'unfollow') {
-          }
-          // postback時の処理
-          if (event.type === 'postback') {
-            const postbackParse: ReferenceTypeProps | ModeSelectTypeProps =
-              JSON.parse(event.postback.data);
+          } else if (event.type === 'unfollow') {
+            /* TODOフォロー解除の時 */
+          } else if (event.type === 'postback') {
+            /* PostBack */
+            const postbackParse:
+              | MessageReferenceTypeProps
+              | ModeSelectTypeProps = JSON.parse(event.postback.data);
             console.log('postback value', postbackParse);
+
+            // modeごとに渡すカウントを変更
+            const modeSaveCount =
+              currentMode.mode === 0
+                ? {
+                    weekMsgSave: currentUser.data.weekImgSave + 1,
+                    totalMsgSave: currentUser.data.totalMsgSave + 1,
+                  }
+                : {
+                    weekImgSave: currentUser.data.weekImgSave + 1,
+                    totalImgSave: currentUser.data.totalImgSave + 1,
+                  };
 
             // referenceType更新・モード選択時の処理
             const textMessage = await postbackProcess(
               postbackParse,
               hashUserId,
+              modeSaveCount,
             );
             console.log('postback return', textMessage);
 
             return lineBotClient().replyMessage(event.replyToken, textMessage);
-          }
-          /* スタンプ・画像・ビデオの時謝罪メッセージを返却 */
-          if (notTextMessage.includes(event.message.type)) {
-            const sorry = notSupported(event);
-            return lineBotClient().replyMessage(event.replyToken, sorry);
-          }
-          /* 固定の質問 */
-          if (fixedQuestions.includes(event.message.text)) {
-            const textMessage = fixed(event.message.text);
-            return lineBotClient().replyMessage(event.replyToken, textMessage);
-          }
-          /* テキストからの画像生成モード */
-          if (imageModeText.includes(event.message.text)) {
-            const reply = await imageProcess(hashUserId);
-            return lineBotClient().replyMessage(event.replyToken, reply);
-          }
+          } else if (event.type === 'message') {
+            /* typeがmessageの時 */
+            const changeTextEvent = event.message as TextEventMessage;
+            const textEvent = changeTextEvent.text;
+            /* スタンプ・画像・ビデオの時謝罪メッセージを返却 */
+            if (notTextMessage.includes(event.message.type)) {
+              const sorry = notSupported(event);
+              return lineBotClient().replyMessage(event.replyToken, sorry);
+            }
+            /* 固定の質問 */
+            if (fixedQuestions.includes(textEvent)) {
+              console.log('固定の質問', event);
+              const textMessage = fixed(textEvent);
+              return lineBotClient().replyMessage(
+                event.replyToken,
+                textMessage,
+              );
+            }
+            /* テキストからの画像生成モード */
+            if (imageModeText.includes(textEvent)) {
+              const reply = await imageProcess(hashUserId);
+              return lineBotClient().replyMessage(event.replyToken, reply);
+            }
+            /* 画像生成モード選択時 */
+            if ([1, 2].includes(currentMode.mode)) {
+              console.log('現在は画像モードの時の処理');
+              const reply = await generation(
+                hashUserId,
+                textEvent,
+                currentMode.mode,
+                {
+                  weekImg: currentUser.data.weekImg + 1,
+                  totalImg: currentUser.data.totalImg + 1,
+                },
+              );
+              return await lineBotClient().replyMessage(
+                event.replyToken,
+                reply,
+              );
+            } else if (currentMode.mode !== 9999) {
+              // 質問からchatGPTの回答を得る
+              const replyText = await this.lineBotService.chatGPTsAnswer(
+                textEvent,
+                hashUserId,
+              );
 
-          const currentMode = await getMode(hashUserId);
-          console.log('現在のモード', currentMode);
-          /* 画像生成モード選択時 */
-          if ([1, 2].includes(currentMode.mode)) {
-            console.log('現在は画像モードの時の処理');
-            const reply = await generation(
-              hashUserId,
-              event.message.text,
-              currentMode.mode,
-            );
-            return await lineBotClient().replyMessage(event.replyToken, reply);
-          } else if (currentMode.mode !== 9999) {
-            /* postback以外の処理 通常の質問が来た時 */
-            // 質問からchatGPTの回答を得る
-            const replyText = await this.lineBotService.chatGPTsAnswer(
-              event.message.text,
-              hashUserId,
-            );
+              const textMessage = await answer(
+                hashUserId,
+                currentMode.mode,
+                event,
+                replyText,
+                {
+                  weekMsg: currentUser.data.weekMsg + 1,
+                  totalMsg: currentUser.data.totalMsg + 1,
+                },
+              );
 
-            const textMessage = await answer(hashUserId, event, replyText);
-
-            return await lineBotClient().replyMessage(
-              event.replyToken,
-              textMessage,
-            );
+              return await lineBotClient().replyMessage(
+                event.replyToken,
+                textMessage,
+              );
+            }
           }
         },
       );
       const response = await Promise.all(results);
 
-      console.timeEnd('test');
       return response;
     } catch (err) {
       console.error(err);
