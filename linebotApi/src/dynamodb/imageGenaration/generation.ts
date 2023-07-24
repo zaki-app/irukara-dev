@@ -9,6 +9,8 @@ import { isImageSave } from 'src/line/quickReply/imageSave';
 import { createUUID, jpDayjs } from 'src/common';
 import { imageSaveError } from 'src/reply/error';
 import { saveQuick } from 'src/line/quickReply/saveQuick';
+import { ImageCounts } from 'src/types/user';
+import { updateUser } from '../user/updateUser';
 
 type ReturnType = [ImageMessage, TextMessage] | TextMessage;
 
@@ -17,6 +19,7 @@ export async function generation(
   hashUserId: string,
   text: string,
   mode: number,
+  imageCount: ImageCounts,
 ): Promise<ReturnType> {
   let returnReply;
   try {
@@ -120,9 +123,9 @@ export async function generation(
       },
     ];
 
-    const errorReply = imageSaveError(saveProps.prompt);
-
-    returnReply = saveResponse ? success : errorReply;
+    // usersTableの画像カウントを更新する
+    const userImageCount = await updateUser(hashUserId, imageCount);
+    if (JSON.parse(userImageCount).statusCode === 200) returnReply = success;
   } catch (err) {
     console.error('illustration generation error...', err);
 

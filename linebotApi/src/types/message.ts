@@ -14,7 +14,7 @@ export interface MessageTable {
 }
 
 // referenceType更新(postback)
-export interface ReferenceTypeProps {
+export interface MessageReferenceTypeProps {
   userId?: string;
   messageId?: string;
   referenceType: number;

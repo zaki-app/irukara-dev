@@ -13,8 +13,12 @@ import { follow } from 'src/reply/follow';
 import LineRichMenu from 'src/line/richMenu';
 import { generation } from 'src/dynamodb/imageGenaration/generation';
 
-import type { UserInfo, ModeSelectTypeProps } from 'src/types/user';
-import type { ReferenceTypeProps } from 'src/types/message';
+import type {
+  UserInfo,
+  ModeSelectTypeProps,
+  CurrentUser,
+} from 'src/types/user';
+import type { MessageReferenceTypeProps } from 'src/types/message';
 import type {
   WebhookRequestBody,
   MessageAPIResponseBase,
@@ -63,9 +67,14 @@ export class LineBotController {
 
           // hash化したuserIdがuserTableにない場合は登録する
           const hashUserId = createUserIdHash(event.source.userId);
+          // 全体で使用するデータ
           const isRegister: UserInfo = await isRegisterUser(hashUserId);
           if (!isRegister) await registerUser(hashUserId);
-          console.log('登録状況', isRegister);
+          const currentUser: CurrentUser =
+            typeof isRegister === 'string' && JSON.parse(isRegister);
+          console.log('登録状況', currentUser.data);
+          const currentMode = await getMode(hashUserId);
+          console.log('現在のモード', currentMode);
 
           /* フォローしてくれた時 */
           if (event.type === 'follow') {
@@ -78,14 +87,28 @@ export class LineBotController {
             /* TODOフォロー解除の時 */
           } else if (event.type === 'postback') {
             /* PostBack */
-            const postbackParse: ReferenceTypeProps | ModeSelectTypeProps =
-              JSON.parse(event.postback.data);
+            const postbackParse:
+              | MessageReferenceTypeProps
+              | ModeSelectTypeProps = JSON.parse(event.postback.data);
             console.log('postback value', postbackParse);
+
+            // modeごとに渡すカウントを変更
+            const modeSaveCount =
+              currentMode.mode === 0
+                ? {
+                    weekMsgSave: currentUser.data.weekImgSave + 1,
+                    totalMsgSave: currentUser.data.totalMsgSave + 1,
+                  }
+                : {
+                    weekImgSave: currentUser.data.weekImgSave + 1,
+                    totalImgSave: currentUser.data.totalImgSave + 1,
+                  };
 
             // referenceType更新・モード選択時の処理
             const textMessage = await postbackProcess(
               postbackParse,
               hashUserId,
+              modeSaveCount,
             );
             console.log('postback return', textMessage);
 
@@ -113,9 +136,6 @@ export class LineBotController {
               const reply = await imageProcess(hashUserId);
               return lineBotClient().replyMessage(event.replyToken, reply);
             }
-
-            const currentMode = await getMode(hashUserId);
-            console.log('現在のモード', currentMode);
             /* 画像生成モード選択時 */
             if ([1, 2].includes(currentMode.mode)) {
               console.log('現在は画像モードの時の処理');
@@ -123,6 +143,10 @@ export class LineBotController {
                 hashUserId,
                 textEvent,
                 currentMode.mode,
+                {
+                  weekImg: currentUser.data.weekImg + 1,
+                  totalImg: currentUser.data.totalImg + 1,
+                },
               );
               return await lineBotClient().replyMessage(
                 event.replyToken,
@@ -140,6 +164,10 @@ export class LineBotController {
                 currentMode.mode,
                 event,
                 replyText,
+                {
+                  weekMsg: currentUser.data.weekMsg + 1,
+                  totalMsg: currentUser.data.totalMsg + 1,
+                },
               );
 
               return await lineBotClient().replyMessage(
