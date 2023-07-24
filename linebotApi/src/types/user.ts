@@ -8,13 +8,18 @@ export interface UsersTable {
   weekMsgSave: number;
   totalMsgSave: number;
   weekImg: number;
-  totalImge: number;
+  totalImg: number;
   weekImgSave: number;
   totalImgSave: number;
   lastLogin?: number;
   createdAt: number;
   updatedAt?: number;
   deletedAt?: number;
+}
+
+// currentUser
+export interface CurrentUser {
+  data: UsersTable;
 }
 
 // user存在確認
@@ -35,7 +40,7 @@ export interface UpdateUsersTable {
   weekMsgSave?: number;
   totalMsgSave?: number;
   weekImg?: number;
-  totalImge?: number;
+  totalImg?: number;
   weekImgSave?: number;
   totalImgSave?: number;
   lastLogin?: number;
@@ -46,4 +51,20 @@ export interface UpdateUsersTable {
 // モード選択時(postback)
 export interface ModeSelectTypeProps {
   mode: number;
+}
+
+// メッセージカウント
+export interface MessageCounts {
+  weekMsg?: number;
+  totalMsg?: number;
+  weekMsgSave?: number;
+  totalMsgSave?: number;
+}
+
+// イメージカウント
+export interface ImageCounts {
+  weekImg?: number;
+  totalImg?: number;
+  weekImgSave?: number;
+  totalImgSave?: number;
 }

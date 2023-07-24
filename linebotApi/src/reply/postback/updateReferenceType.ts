@@ -1,18 +1,26 @@
-import { updateMessage } from 'src/dynamodb';
+import { updateMessage, updateUser } from 'src/dynamodb';
 import { fixedQuickReply } from 'src/line/quickReply/quickReply';
 
-import type { ReferenceTypeProps } from 'src/types/message';
+import type { MessageReferenceTypeProps } from 'src/types/message';
 import type { TextMessage } from '@line/bot-sdk';
 import { updateImagesTable } from 'src/dynamodb/imageGenaration/updateImagesTable';
 import { ImageReferenceTypeProps } from 'src/types/image';
 
 export async function updateReferenceType(
-  props: ReferenceTypeProps,
+  props: MessageReferenceTypeProps,
+  modeSaveCount,
 ): Promise<TextMessage> {
-  const updateTypeText =
-    props.referenceType === 1 ? '保存しました😋' : '保存しませんでした🌀';
+  let updateTypeText: string;
+  if (props.referenceType === 1) {
+    updateTypeText = '保存しました😋';
+    // 保存したらユーザーの保存回数を更新する
+    await updateUser(props.userId, modeSaveCount);
+  } else {
+    updateTypeText = '保存しませんでした🌀';
+  }
 
   if (props.mode === 0) {
+    // メッセージテーブルの更新
     const updateParams = {
       referenceType: props.referenceType,
       updatedAt: props.updatedAt,

@@ -28,7 +28,7 @@ export const registerUser = async (userId: string): Promise<string> => {
       weekMsgSave: 0,
       totalMsgSave: 0,
       weekImg: 0,
-      totalImge: 0,
+      totalImg: 0,
       weekImgSave: 0,
       totalImgSave: 0,
       lastLogin: jpDayjs().unix(),
