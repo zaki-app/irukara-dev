@@ -12,6 +12,7 @@ import type {
   UserInfo,
   UserInfoType,
 } from 'src/dynamodb/types';
+import { eventScheduler } from 'src/scheduler';
 
 /**
  * ユーザーが未登録なら登録する
@@ -26,11 +27,15 @@ export const registerUser = async (userId: string): Promise<string> => {
     const params: UserInfoType = {
       userId: userId,
       mode: 0,
-      status: 0,
-      todayCount: 0,
-      totalCount: 0,
-      todaySave: 0,
-      totalSave: 0,
+      status: 1,
+      weekMsg: 0,
+      totalMsg: 0,
+      weekMsgSave: 0,
+      totalMsgSave: 0,
+      weekImg: 0,
+      totalImge: 0,
+      weekImgSave: 0,
+      totalImgSave: 0,
       lastLogin: jpDayjs().unix(),
       createdAt: jpDayjs().unix(),
     };
@@ -48,7 +53,10 @@ export const registerUser = async (userId: string): Promise<string> => {
 
     await client.send(new TransactWriteItemsCommand(transactItem));
 
-    // ユーザーが正常保存されたら何も返さない
+    // スケジュールを作成する
+    const scheduleResult = await eventScheduler(params.status, userId);
+    console.log('スケジュール作成結果', scheduleResult);
+
     return JSON.stringify({
       statusCode: 200,
       body: {

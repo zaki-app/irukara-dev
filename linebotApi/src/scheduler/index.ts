@@ -5,7 +5,10 @@ import {
 } from '@aws-sdk/client-scheduler';
 import type { CreateScheduleInput } from '@aws-sdk/client-scheduler';
 
-export async function eventScheduler(): Promise<boolean> {
+export async function eventScheduler(
+  status: number,
+  userId: string,
+): Promise<boolean> {
   let response: boolean;
   try {
     const client = new SchedulerClient({ region: process.env.REGION });

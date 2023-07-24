@@ -5,10 +5,14 @@ export interface UserInfoType {
   userId: string;
   mode: number;
   status: number;
-  todayCount?: number;
-  totalCount?: number;
-  todaySave?: number;
-  totalSave?: number;
+  weekMsg: number;
+  totalMsg: number;
+  weekMsgSave: number;
+  totalMsgSave: number;
+  weekImg: number;
+  totalImge: number;
+  weekImgSave: number;
+  totalImgSave: number;
   lastLogin?: number;
   createdAt: number;
   updatedAt?: number;
@@ -41,13 +45,16 @@ export type UserInfo = string | boolean;
 export interface UpdateUserTable {
   mode: number;
   status: number;
-  todayCount?: number;
-  totalCount?: number;
-  todaySave?: number;
-  totalSave?: number;
+  weekMsg?: number;
+  totalMsg?: number;
+  weekMsgSave?: number;
+  totalMsgSave?: number;
+  weekImg?: number;
+  totalImge?: number;
+  weekImgSave?: number;
+  totalImgSave?: number;
   lastLogin?: number;
-  createdAt: number;
-  updatedAt?: number;
+  updatedAt: number;
   deletedAt?: number;
 }
 
@@ -62,14 +69,4 @@ export interface ReferenceTypeProps {
 // モード選択時(postback)
 export interface ModeSelectTypeProps {
   mode: number;
-}
-
-// メッセージ送信、postbackでの上限をリセット
-export interface UpperLimitParams {
-  todayCount?: number;
-  totalCount?: number;
-  todaySave?: number;
-  totalSave?: number;
-  lastLogin?: number;
-  updatedAt?: number;
 }

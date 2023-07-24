@@ -8,8 +8,8 @@ import type { ReferenceTypeProps } from 'src/dynamodb/types';
 
 /**
  * 保存するボタンクリック後の更新処理
- * messageテーブルからreferenceType更新
- * userテーブルからtodaySave, totalSave更新
+ * messageテーブルからreferenceTypeと更新
+ * userテーブルからweekMsg, totalSave更新
  * @param data
  * @returns
  */
