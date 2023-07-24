@@ -20,6 +20,8 @@ import { getMode } from 'src/dynamodb/user/getUserInfo';
 import { follow } from 'src/reply/follow';
 import LineRichMenu from 'src/line/richMenu';
 import { generation } from 'src/dynamodb/imageGenaration/generation';
+import { updateUserEventClient } from 'src/eventBridge';
+import { eventScheduler } from 'src/eventBridge/scheduler';
 
 @Controller('linebot')
 export class LineBotController {
@@ -34,7 +36,7 @@ export class LineBotController {
     @Body() req: WebhookRequestBody,
   ): Promise<any> {
     try {
-      console.time('test');
+      // console.time('test');
       // 著名の検証
       const isSignature = new LineInspection().verifySignature(
         signature,
@@ -49,9 +51,12 @@ export class LineBotController {
       console.log('ステージ', process.env.NOW_STAGE);
       // リッチメニューがない場合は作成
       const richMenuCount = await lineBotClient().getRichMenuList();
+      console.log('リッチメニュー', richMenuCount);
       if (richMenuCount.length === 0) {
         await LineRichMenu();
       }
+      // 現在のカウント数を取得する
+      // それぞれの処理でカウント数を増やす
       const events: any = req.events;
 
       const results: MessageAPIResponseBase[] = events.map(
@@ -63,6 +68,11 @@ export class LineBotController {
           const isRegister: UserInfo = await isRegisterUser(hashUserId);
           if (!isRegister) await registerUser(hashUserId);
           console.log('登録状況', isRegister);
+
+          // のちのち別ファイルで呼び出すようにする EventBridge
+          // const eventClient = await updateUserEventClient();
+          const eventClient = await eventScheduler();
+          console.log('イベントクライアント', eventClient);
 
           // フォローしてくれた時
           if (event.type === 'follow') {
@@ -136,7 +146,7 @@ export class LineBotController {
       );
       const response = await Promise.all(results);
 
-      console.timeEnd('test');
+      // console.timeEnd('test');
       return response;
     } catch (err) {
       console.error(err);
