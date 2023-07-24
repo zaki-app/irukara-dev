@@ -1,10 +1,9 @@
 import { createUserIdHash, jpDayjs } from 'src/common';
 import { TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import { updateCount } from 'src/dynamodb';
 import DynamoClient from 'src/dynamodb/client';
 
-import type { SaveAnswerType } from '../types';
+import type { MessageTable } from 'src/types/message';
 
 /**
  * 質問と回答を保存する
@@ -19,7 +18,7 @@ export async function saveMessage(
   try {
     // 保存する項目(ユーザーIDはハッシュ化する)
     const hashUserId = createUserIdHash(event.source.userId);
-    const params: SaveAnswerType = {
+    const params: MessageTable = {
       messageId: event.replyToken,
       userId: hashUserId,
       mode: 0,
@@ -48,8 +47,8 @@ export async function saveMessage(
     await DynamoClient().send(new TransactWriteItemsCommand(transactItem));
 
     // ユーザーの送信カウントを1増加させる
-    const userCount = await updateCount(event.source.userId);
-    console.log('ユーザーカウント', userCount);
+    // const userCount = await updateCount(event.source.userId);
+    // console.log('ユーザーカウント', userCount);
 
     const answerResponse = JSON.stringify({
       statusCode: 200,

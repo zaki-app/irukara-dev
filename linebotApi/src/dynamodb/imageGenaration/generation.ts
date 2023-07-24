@@ -8,6 +8,7 @@ import { ImageMessage, TextMessage } from '@line/bot-sdk';
 import { isImageSave } from 'src/line/quickReply/imageSave';
 import { createUUID, jpDayjs } from 'src/common';
 import { imageSaveError } from 'src/reply/error';
+import { saveQuick } from 'src/line/quickReply/saveQuick';
 
 type ReturnType = [ImageMessage, TextMessage] | TextMessage;
 
@@ -99,6 +100,11 @@ export async function generation(
     console.log('保存結果', saveResponse);
 
     // replyメッセージ
+    const updateParams = {
+      userId: hashUserId,
+      imageId: saveProps.imageId,
+    };
+    const quickItems = await saveQuick(updateParams, mode);
     const success = [
       {
         type: 'image',
@@ -107,10 +113,10 @@ export async function generation(
       },
       {
         type: 'text',
-        text: `${text} の${replyMessage}を生成しました！\n気に入ったら保存ボタンを教えてみましょう！`,
-        // quickReply: {
-        //   items:
-        // }
+        text: `${text} の${replyMessage}を生成しました！\n気に入ったら保存ボタンを押してください！`,
+        quickReply: {
+          items: quickItems,
+        },
       },
     ];
 

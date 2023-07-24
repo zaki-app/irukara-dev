@@ -17,11 +17,6 @@ export async function postbackProcess(
     console.log('モード', postbackParse.mode);
     response = await updateMode(hashUserId, postbackParse.mode);
   }
-  // else if (postbackParse.mode === 1) {
-  //   console.log('イラストモード');
-  // } else if (postbackParse.mode === 2) {
-  //   console.log('リアルモード');
-  // }
 
   // reply内容を返却
   return response;
