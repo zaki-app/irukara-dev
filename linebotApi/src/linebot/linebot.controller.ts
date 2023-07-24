@@ -8,12 +8,13 @@ import { imageModeText } from 'src/imageGeneration/generationMode';
 import { imageProcess } from 'src/imageGeneration/imageProcess';
 import { notTextMessage } from 'src/line/replyMessage/sorryReply';
 import { postbackProcess, notSupported, answer, fixed } from 'src/reply';
+import { getMode } from 'src/dynamodb/user/getUserInfo';
+import { follow } from 'src/reply/follow';
+import LineRichMenu from 'src/line/richMenu';
+import { generation } from 'src/dynamodb/imageGenaration/generation';
 
-import type {
-  UserInfo,
-  ReferenceTypeProps,
-  ModeSelectTypeProps,
-} from 'src/dynamodb/types';
+import type { UserInfo, ModeSelectTypeProps } from 'src/types/user';
+import type { ReferenceTypeProps } from 'src/types/message';
 import type {
   WebhookRequestBody,
   MessageAPIResponseBase,
@@ -21,10 +22,6 @@ import type {
   WebhookEvent,
   TextEventMessage,
 } from '@line/bot-sdk';
-import { getMode } from 'src/dynamodb/user/getUserInfo';
-import { follow } from 'src/reply/follow';
-import LineRichMenu from 'src/line/richMenu';
-import { generation } from 'src/dynamodb/imageGenaration/generation';
 
 @Controller('linebot')
 export class LineBotController {
@@ -55,7 +52,6 @@ export class LineBotController {
       // リッチメニューがない場合は作成
       const richMenuCount: RichMenuResponse[] =
         await lineBotClient().getRichMenuList();
-      console.log('リッチメニュー', richMenuCount);
       if (richMenuCount.length === 0) {
         await LineRichMenu();
       }
@@ -105,7 +101,6 @@ export class LineBotController {
             }
             /* 固定の質問 */
             if (fixedQuestions.includes(textEvent)) {
-              console.log(textEvent);
               console.log('固定の質問', event);
               const textMessage = fixed(textEvent);
               return lineBotClient().replyMessage(
@@ -134,14 +129,18 @@ export class LineBotController {
                 reply,
               );
             } else if (currentMode.mode !== 9999) {
-              /* postback以外の処理 通常の質問が来た時 */
               // 質問からchatGPTの回答を得る
               const replyText = await this.lineBotService.chatGPTsAnswer(
                 textEvent,
                 hashUserId,
               );
 
-              const textMessage = await answer(hashUserId, event, replyText);
+              const textMessage = await answer(
+                hashUserId,
+                currentMode.mode,
+                event,
+                replyText,
+              );
 
               return await lineBotClient().replyMessage(
                 event.replyToken,

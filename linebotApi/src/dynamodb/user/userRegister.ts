@@ -1,5 +1,4 @@
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { v4 as uuidv4 } from 'uuid';
 import DynamoClient from 'src/dynamodb/client';
 import {
   TransactWriteItemsCommand,
@@ -7,11 +6,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { jpDayjs } from 'src/common';
 
-import type {
-  UpdateUserTable,
-  UserInfo,
-  UserInfoType,
-} from 'src/dynamodb/types';
+import type { UsersTable, UserInfo } from 'src/types/user';
 import { eventScheduler } from 'src/scheduler';
 
 /**
@@ -24,7 +19,7 @@ export const registerUser = async (userId: string): Promise<string> => {
     console.log('登録時のユーザーID', userId);
     const client = DynamoClient();
 
-    const params: UserInfoType = {
+    const params: UsersTable = {
       userId: userId,
       mode: 0,
       status: 1,
@@ -104,78 +99,5 @@ export const isRegisterUser = async (userId: string): Promise<UserInfo> => {
   } catch (err) {
     console.log('search User error...', err);
     return false;
-  }
-};
-
-/**
- * ユーザーテーブルを更新する
- * @params userid
- * @params UpdateUserTable
- */
-export const updateUserInfo = async (
-  userId: string,
-  updateParams: UpdateUserTable,
-) => {
-  try {
-    const client = DynamoClient();
-    const objKeys = Object.keys(updateParams);
-    const params = {
-      TransactItems: [
-        {
-          Update: {
-            TableName: process.env.DYNAMODB_USER_TABLE_NAME,
-            Key: marshall({
-              userId: userId,
-            }),
-            UpdateExpression: `SET ${objKeys
-              .map((_, index) => `#key${index} = :value${index}`)
-              .join(', ')}`,
-            ExpressionAttributeNames: objKeys.reduce(
-              (acc, key, index) => ({
-                ...acc,
-                [`#key${index}`]: key,
-              }),
-              {},
-            ),
-            ExpressionAttributeValues: marshall(
-              objKeys.reduce(
-                (acc, key, index) => ({
-                  ...acc,
-                  [`:value${index}`]: updateParams[key],
-                }),
-                {},
-              ),
-            ),
-          },
-        },
-      ],
-    };
-
-    const command = new TransactWriteItemsCommand(params);
-    await client.send(command);
-
-    const response = JSON.stringify({
-      statusCode: 200,
-      body: {
-        data: updateParams,
-        message: `${userId}の更新が成功しました`,
-      },
-    });
-
-    console.log('update userTable success!', response);
-
-    return response;
-  } catch (err: any) {
-    const response = JSON.stringify({
-      statusCode: 500,
-      body: {
-        message: 'ユーザー情報の更新に失敗しました',
-        errorMessage: err.message,
-        errorStack: err.stack,
-      },
-    });
-
-    console.log('update userTable Failed...', response);
-    return response;
   }
 };
