@@ -11,18 +11,26 @@ import { eventScheduler } from 'src/scheduler';
 
 /**
  * ユーザーが未登録なら登録する
- * @param userId
+ * @params userId
+ * @params mode
  * @returns JSON形式のレスポンス string
  */
-export const registerUser = async (userId: string): Promise<string> => {
+export const registerUser = async (
+  userId: string,
+  mode?: number,
+): Promise<string> => {
+  let response;
   try {
     console.log('登録時のユーザーID', userId);
     const client = DynamoClient();
 
+    const selectMode = mode ? mode : 0;
+    const status = 0;
+
     const params: UsersTable = {
       userId: userId,
-      mode: 0,
-      status: 1,
+      mode: selectMode,
+      status: status,
       weekMsg: 0,
       totalMsg: 0,
       weekMsgSave: 0,
@@ -48,23 +56,25 @@ export const registerUser = async (userId: string): Promise<string> => {
 
     await client.send(new TransactWriteItemsCommand(transactItem));
 
-    // スケジュールを作成する
-    const scheduleResult = await eventScheduler(params.status, userId);
-    console.log('スケジュール作成結果', scheduleResult);
+    // // スケジュールを作成する
+    // const scheduleResult = await eventScheduler(params.status, userId);
+    // console.log('スケジュール作成結果', scheduleResult);
 
-    return JSON.stringify({
+    response = JSON.stringify({
       statusCode: 200,
       body: {
         data: params,
       },
     });
   } catch (err) {
-    return JSON.stringify({
+    response = JSON.stringify({
       statusCode: 500,
       message: err.errorMessage,
       stack: err.stack,
     });
   }
+  console.log('userRegister Result...', response);
+  return response;
 };
 
 /**
@@ -78,9 +88,7 @@ export const isRegisterUser = async (userId: string): Promise<UserInfo> => {
 
     const params = {
       TableName: process.env.DYNAMODB_USER_TABLE_NAME,
-      Key: marshall({
-        userId: userId,
-      }),
+      Key: marshall({ userId }),
     };
 
     const { Item } = await client.send(new GetItemCommand(params));

@@ -8,16 +8,11 @@ import { imageModeText } from 'src/imageGeneration/generationMode';
 import { imageProcess } from 'src/imageGeneration/imageProcess';
 import { notTextMessage } from 'src/line/replyMessage/sorryReply';
 import { postbackProcess, notSupported, answer, fixed } from 'src/reply';
-import { getMode } from 'src/dynamodb/user/getUserInfo';
 import { follow } from 'src/reply/follow';
 import LineRichMenu from 'src/line/richMenu';
-import { generation } from 'src/dynamodb/imageGenaration/generation';
+import { imageGeneration } from 'src/dynamodb/imageGenaration/generation';
 
-import type {
-  UserInfo,
-  ModeSelectTypeProps,
-  CurrentUser,
-} from 'src/types/user';
+import type { UserInfo, ModeSelectTypeProps, UsersTable } from 'src/types/user';
 import type { MessageReferenceTypeProps } from 'src/types/message';
 import type {
   WebhookRequestBody,
@@ -26,6 +21,7 @@ import type {
   WebhookEvent,
   TextEventMessage,
 } from '@line/bot-sdk';
+import { getUserInfo } from 'src/dynamodb/user/getUserInfo';
 
 @Controller('linebot')
 export class LineBotController {
@@ -40,41 +36,60 @@ export class LineBotController {
     @Body() req: WebhookRequestBody,
   ): Promise<any> {
     console.log('リクエスト', req);
+    // 著名の検証
+    const isSignature: boolean = new LineInspection().verifySignature(
+      signature,
+      JSON.stringify(req),
+    );
+    if (!isSignature) {
+      console.error('不正なアクセス', isSignature);
+      throw new Error('invalid signature');
+    }
+
+    this.logger.log('処理スタート');
+    console.log('現在のステージ', process.env.NOW_STAGE);
+    // リッチメニューがない場合は作成
+    const richMenuCount: RichMenuResponse[] =
+      await lineBotClient().getRichMenuList();
+    if (richMenuCount.length === 0) await LineRichMenu();
+
+    const events: WebhookEvent[] = req.events;
+
     try {
-      // 著名の検証
-      const isSignature: boolean = new LineInspection().verifySignature(
-        signature,
-        JSON.stringify(req),
-      );
-      if (!isSignature) {
-        console.error('不正なアクセス', isSignature);
-        throw new Error('invalid signature');
-      }
-
-      this.logger.log('処理スタート');
-      console.log('現在のステージ', process.env.NOW_STAGE);
-      // リッチメニューがない場合は作成
-      const richMenuCount: RichMenuResponse[] =
-        await lineBotClient().getRichMenuList();
-      if (richMenuCount.length === 0) {
-        await LineRichMenu();
-      }
-      const events: WebhookEvent[] = req.events;
-
       const results = events.map(
         async (event: WebhookEvent): Promise<MessageAPIResponseBase> => {
           console.log('イベント', event);
 
+          // LINEBOTのmodeがstandbyの時は何もしない
+          if (event.mode === 'standby') return;
+
           // hash化したuserIdがuserTableにない場合は登録する
           const hashUserId = createUserIdHash(event.source.userId);
-          // 全体で使用するデータ
+          // ユーザー登録の有無
           const isRegister: UserInfo = await isRegisterUser(hashUserId);
-          if (!isRegister) await registerUser(hashUserId);
-          const currentUser: CurrentUser =
-            typeof isRegister === 'string' && JSON.parse(isRegister);
-          console.log('登録状況', currentUser.data);
-          const currentMode = await getMode(hashUserId);
-          console.log('現在のモード', currentMode);
+
+          // 未登録の場合登録
+          let userInfo: string;
+          if (!isRegister && event.type === 'postback') {
+            // 友達登録後すぐにモード選択する場合
+            const selectMode = JSON.parse(event.postback.data);
+            await registerUser(hashUserId, selectMode.mode);
+            const textMessage = await postbackProcess(selectMode, hashUserId);
+
+            return lineBotClient().replyMessage(event.replyToken, textMessage);
+          } else if (!isRegister) {
+            // 友達登録後、メッセージ等送信した場合
+            userInfo = await registerUser(hashUserId);
+          }
+
+          // ユーザー情報を取得
+          let currentUser: UsersTable | number;
+          if (userInfo) {
+            currentUser = JSON.parse(userInfo).body.data as UsersTable;
+          } else {
+            currentUser = (await getUserInfo(hashUserId)) as UsersTable;
+          }
+          console.log('current user info...', currentUser);
 
           /* フォローしてくれた時 */
           if (event.type === 'follow') {
@@ -86,7 +101,8 @@ export class LineBotController {
           } else if (event.type === 'unfollow') {
             /* TODOフォロー解除の時 */
           } else if (event.type === 'postback') {
-            /* PostBack */
+            console.log('postbackの処理', currentUser);
+            /* 保存時のPostBack */
             const postbackParse:
               | MessageReferenceTypeProps
               | ModeSelectTypeProps = JSON.parse(event.postback.data);
@@ -94,14 +110,14 @@ export class LineBotController {
 
             // modeごとに渡すカウントを変更
             const modeSaveCount =
-              currentMode.mode === 0
+              currentUser.mode === 0
                 ? {
-                    weekMsgSave: currentUser.data.weekImgSave + 1,
-                    totalMsgSave: currentUser.data.totalMsgSave + 1,
+                    weekMsgSave: currentUser.weekMsgSave + 1,
+                    totalMsgSave: currentUser.totalMsgSave + 1,
                   }
                 : {
-                    weekImgSave: currentUser.data.weekImgSave + 1,
-                    totalImgSave: currentUser.data.totalImgSave + 1,
+                    weekImgSave: currentUser.weekImgSave + 1,
+                    totalImgSave: currentUser.totalImgSave + 1,
                   };
 
             // referenceType更新・モード選択時の処理
@@ -137,22 +153,22 @@ export class LineBotController {
               return lineBotClient().replyMessage(event.replyToken, reply);
             }
             /* 画像生成モード選択時 */
-            if ([1, 2].includes(currentMode.mode)) {
+            if ([1, 2].includes(currentUser.mode)) {
               console.log('現在は画像モードの時の処理');
-              const reply = await generation(
+              const reply = await imageGeneration(
                 hashUserId,
                 textEvent,
-                currentMode.mode,
+                currentUser.mode,
                 {
-                  weekImg: currentUser.data.weekImg + 1,
-                  totalImg: currentUser.data.totalImg + 1,
+                  weekImg: currentUser.weekImg + 1,
+                  totalImg: currentUser.totalImg + 1,
                 },
               );
               return await lineBotClient().replyMessage(
                 event.replyToken,
                 reply,
               );
-            } else if (currentMode.mode !== 9999) {
+            } else if (currentUser.mode !== 9999) {
               // 質問からchatGPTの回答を得る
               const replyText = await this.lineBotService.chatGPTsAnswer(
                 textEvent,
@@ -161,12 +177,12 @@ export class LineBotController {
 
               const textMessage = await answer(
                 hashUserId,
-                currentMode.mode,
+                currentUser.mode,
                 event,
                 replyText,
                 {
-                  weekMsg: currentUser.data.weekMsg + 1,
-                  totalMsg: currentUser.data.totalMsg + 1,
+                  weekMsg: currentUser.weekMsg + 1,
+                  totalMsg: currentUser.totalMsg + 1,
                 },
               );
 
@@ -184,8 +200,10 @@ export class LineBotController {
     } catch (err) {
       console.error(err);
       this.logger.error(`LineBotエラー: ${err}`);
+      // const errorEvent: LineBotError = events[0];
+      // return await lineBotClient().replyMessage(,lineBotError());
       // エラーの時も何かメッセージを入れたい
-      return err;
+      // return err;
     } finally {
       this.logger.log('全ての処理が終了');
     }

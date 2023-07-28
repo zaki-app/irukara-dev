@@ -5,7 +5,7 @@ import { updateMode } from 'src/reply/postback/updateMode';
 export async function postbackProcess(
   postbackParse,
   hashUserId: string,
-  modeSaveCount,
+  modeSaveCount?,
 ): Promise<TextMessage> {
   console.log('渡ってきた値', postbackParse);
   const modeNumber = [0, 1, 2];

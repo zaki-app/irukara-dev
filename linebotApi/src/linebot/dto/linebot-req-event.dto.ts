@@ -1,10 +1,3 @@
-/**
- * 返却するリプライメッセージ
- */
-export class ReturnReplyMsgDto {
-  type: string;
-  text: string;
-  quickReply: {
-    items: [];
-  };
-}
+/* TODO LINEBot関係の方はここにまとめたい */
+
+// エラー時のイベント

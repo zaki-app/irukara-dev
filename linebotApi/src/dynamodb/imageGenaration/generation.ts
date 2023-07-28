@@ -15,7 +15,7 @@ import { updateUser } from '../user/updateUser';
 type ReturnType = [ImageMessage, TextMessage] | TextMessage;
 
 /* モードからイラストとリアルで分岐する */
-export async function generation(
+export async function imageGeneration(
   hashUserId: string,
   text: string,
   mode: number,
