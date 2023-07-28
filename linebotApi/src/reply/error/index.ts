@@ -1,6 +1,7 @@
 /* エラー関係のリプライをまとめる */
 
 import type { TextMessage } from '@line/bot-sdk';
+import { fixedQuickReply } from 'src/line/quickReply/quickReply';
 
 export const imageSaveError = (props?: any): TextMessage => ({
   type: 'text',
@@ -34,5 +35,13 @@ export const imageSaveError = (props?: any): TextMessage => ({
         },
       },
     ],
+  },
+});
+
+export const lineBotError = (): TextMessage => ({
+  type: 'text',
+  text: 'エラーが発生してしまいました\n、再度行っていただくか時間をおいてお試しをお願いします🙇‍♂️🙇‍♀️',
+  quickReply: {
+    items: fixedQuickReply,
   },
 });
