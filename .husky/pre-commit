@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npx prettier --write "./linebotApi/src/**/*.{js,jsx,ts,tsx,json}"
+npx eslint --fix "./linebotApi/src/**/*.{js,jsx,ts,tsx,json}"
+cd linebotApi && npx nest build --webpack
