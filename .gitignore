@@ -47,3 +47,5 @@ richmenu/package.json
 richmenu/package-lock.json
 richmenu/dev-remove.js
 richmenu/stg-remove.js
+unitTestData
+test/setup.js

@@ -12,9 +12,11 @@ export const updateUser = async (
   userId: string,
   updateParams: UpdateUsersTable,
 ) => {
+  console.log('updateの値', userId, updateParams);
   try {
     const client = DynamoClient();
     const objKeys = Object.keys(updateParams);
+
     const params = {
       TransactItems: [
         {
