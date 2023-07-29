@@ -35,7 +35,7 @@ export class LineBotController {
     @Headers('x-line-signature') signature: string,
     @Body() req: WebhookRequestBody,
   ): Promise<any> {
-    console.log('リクエスト', req);
+    console.log('リクエスト', signature);
     // 著名の検証
     const isSignature: boolean = new LineInspection().verifySignature(
       signature,
