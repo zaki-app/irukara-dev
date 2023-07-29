@@ -48,4 +48,4 @@ richmenu/package-lock.json
 richmenu/dev-remove.js
 richmenu/stg-remove.js
 unitTestData
-setup.js
+test/setup.js
