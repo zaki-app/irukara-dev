@@ -25,7 +25,7 @@ export const registerUser = async (
     const client = DynamoClient();
 
     const selectMode = mode ? mode : 0;
-    const status = 0;
+    const status = 1;
 
     const params: UsersTable = {
       userId: userId,
@@ -57,8 +57,8 @@ export const registerUser = async (
     await client.send(new TransactWriteItemsCommand(transactItem));
 
     // // スケジュールを作成する
-    // const scheduleResult = await eventScheduler(params.status, userId);
-    // console.log('スケジュール作成結果', scheduleResult);
+    const scheduleResult = await eventScheduler(params.status, userId);
+    console.log('スケジュール作成結果', scheduleResult);
 
     response = JSON.stringify({
       statusCode: 200,

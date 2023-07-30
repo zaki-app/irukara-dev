@@ -22,6 +22,8 @@ import type {
   TextEventMessage,
 } from '@line/bot-sdk';
 import { getUserInfo } from 'src/dynamodb/user/getUserInfo';
+import { upperLimit } from 'src/common/upperLimit';
+import { replyUpperLimit } from 'src/reply/upperLimit';
 
 @Controller('linebot')
 export class LineBotController {
@@ -58,7 +60,8 @@ export class LineBotController {
     try {
       const results = events.map(
         async (event: WebhookEvent): Promise<MessageAPIResponseBase> => {
-          console.log('イベント', event);
+          console.log('event...', event);
+          // const replyToken as ReplyableEvent = event.
 
           // LINEBOTのmodeがstandbyの時は何もしない
           if (event.mode === 'standby') return;
@@ -91,6 +94,27 @@ export class LineBotController {
           }
           console.log('current user info...', currentUser);
 
+          // ユーザーのカウント数から使用制限超過の場合はメッセージを送信
+          const { messageLimit, imageLimit } = upperLimit(currentUser);
+          if ((!messageLimit || !imageLimit) && event.type === 'message') {
+            if (
+              (currentUser.mode === 0 && !messageLimit) ||
+              ((currentUser.mode === 1 || currentUser.mode === 2) &&
+                !imageLimit) ||
+              (!messageLimit && !imageLimit)
+            ) {
+              const textMessage = replyUpperLimit(
+                currentUser.status,
+                messageLimit,
+                imageLimit,
+              );
+              console.log('リミット返信メッセージ', textMessage);
+              return lineBotClient().replyMessage(
+                event.replyToken,
+                textMessage,
+              );
+            }
+          }
           /* フォローしてくれた時 */
           if (event.type === 'follow') {
             const followMessage = follow();
@@ -148,12 +172,12 @@ export class LineBotController {
               );
             }
             /* テキストからの画像生成モード */
-            if (imageModeText.includes(textEvent)) {
+            if (imageLimit && imageModeText.includes(textEvent)) {
               const reply = await imageProcess(hashUserId);
               return lineBotClient().replyMessage(event.replyToken, reply);
             }
             /* 画像生成モード選択時 */
-            if ([1, 2].includes(currentUser.mode)) {
+            if (imageLimit && [1, 2].includes(currentUser.mode)) {
               console.log('現在は画像モードの時の処理');
               const reply = await imageGeneration(
                 hashUserId,
@@ -168,7 +192,7 @@ export class LineBotController {
                 event.replyToken,
                 reply,
               );
-            } else if (currentUser.mode !== 9999) {
+            } else if (messageLimit && currentUser.mode !== 9999) {
               // 質問からchatGPTの回答を得る
               const replyText = await this.lineBotService.chatGPTsAnswer(
                 textEvent,

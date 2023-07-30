@@ -103,29 +103,33 @@ export async function imageGeneration(
     console.log('保存結果', saveResponse);
 
     // replyメッセージ
-    const updateParams = {
-      userId: hashUserId,
-      imageId: saveProps.imageId,
-    };
-    const quickItems = await saveQuick(updateParams, mode);
-    const success = [
-      {
-        type: 'image',
-        originalContentUrl: imageUrl,
-        previewImageUrl: imageUrl,
-      },
-      {
-        type: 'text',
-        text: `${text} の${replyMessage}を生成しました！\n気に入ったら保存ボタンを押してください！`,
-        quickReply: {
-          items: quickItems,
+    if (saveResponse) {
+      const updateParams = {
+        userId: hashUserId,
+        imageId: saveProps.imageId,
+      };
+      const quickItems = await saveQuick(updateParams, mode);
+      const success = [
+        {
+          type: 'image',
+          originalContentUrl: imageUrl,
+          previewImageUrl: imageUrl,
         },
-      },
-    ];
+        {
+          type: 'text',
+          text: `${text} の${replyMessage}を生成しました！\n気に入ったら保存ボタンを押してください！`,
+          quickReply: {
+            items: quickItems,
+          },
+        },
+      ];
 
-    // usersTableの画像カウントを更新する
-    const userImageCount = await updateUser(hashUserId, imageCount);
-    if (JSON.parse(userImageCount).statusCode === 200) returnReply = success;
+      // usersTableの画像カウントを更新する
+      const userImageCount = await updateUser(hashUserId, imageCount);
+      if (JSON.parse(userImageCount).statusCode === 200) returnReply = success;
+    } else {
+      returnReply = imageSaveError();
+    }
   } catch (err) {
     console.error('illustration generation error...', err);
 

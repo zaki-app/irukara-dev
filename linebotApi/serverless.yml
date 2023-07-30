@@ -99,6 +99,8 @@ functions:
       LINEBOT_CHANNEL_ID: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_CHANNEL_ID}
       LIFF_URL: ${self:custom.otherfile.environment.${self:provider.stage}.LIFF_URL}
       STABLE_DIFFUSION_API_KEY: ${self:custom.otherfile.environment.${self:provider.stage}.STABLE_DIFFUSION_API_KEY}
+      LAMBDA_ARN: ${self:custom.otherfile.environment.${self:provider.stage}.LAMBDA_ARN}
+      LAMBDA_ROLE: ${self:custom.otherfile.environment.${self:provider.stage}.LAMBDA_ROLE}
       NOW_STAGE: ${self:custom.otherfile.environment.${self:provider.stage}.NOW_STAGE}
     runtime: nodejs16.x
     memorySize: 512

@@ -27,8 +27,8 @@ export const fixedQuickReply: QuickReplyItem[] = [
   },
 ];
 
-// モード変更時
-export function modeChangeReply(messages): QuickReplyItem[] {
+// テキスト配列からmessageのクイックリプライを生成する
+export function createQuickReply(messages): QuickReplyItem[] {
   console.log('引数', messages);
   const replies = [];
   messages.forEach((item: string) => {
@@ -42,6 +42,6 @@ export function modeChangeReply(messages): QuickReplyItem[] {
     });
   });
 
-  console.log('モードのリプライ', replies);
+  console.log('クイックリプライ', replies);
   return replies;
 }

@@ -29,6 +29,7 @@ export async function updateMessage(
             Key: marshall({
               messageId,
             }),
+            ConditionExpression: 'attribute_exists(messageId)',
             UpdateExpression: `SET ${objKeys
               .map((_, index) => `#key${index} = :value${index}`)
               .join(', ')}`,
@@ -65,11 +66,22 @@ export async function updateMessage(
 
     return response;
   } catch (err) {
-    response = JSON.stringify({
-      message: 'dynamodb以外でエラー',
-      errorMsg: err.message,
-      errorStack: err.errorStack,
-    });
+    if (
+      err.CancellationReasons &&
+      err.CancellationReasons[0].Code === 'ConditionalCheckFailed'
+    ) {
+      response = JSON.stringify({
+        message: 'messageIdがMessagesTabelに存在しません',
+        errorMsg: err.message,
+        errorStack: err.errorStack,
+      });
+    } else {
+      response = JSON.stringify({
+        message: 'dynamodb以外でエラー',
+        errorMsg: err.message,
+        errorStack: err.errorStack,
+      });
+    }
   }
 
   console.log('messagesTable update result...', response);
