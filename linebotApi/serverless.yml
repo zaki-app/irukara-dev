@@ -28,6 +28,9 @@ provider:
             - 'dynamodb:PutItem'
             - 'dynamodb:UpdateItem'
             - 'dynamodb:DeleteItem'
+            - 'iam:PassRole'
+            - 'scheduler:CreateSchedule'
+            - 'states:StartExecution'
           Resource:
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable
@@ -43,6 +46,8 @@ provider:
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/memberStatusIndex
             # UsersTableのインデックス
             - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UsersTable/index/modeIndex
+            # scheduler
+            - '*'
 
 custom:
   defaultStage: local
@@ -99,6 +104,8 @@ functions:
       LINEBOT_CHANNEL_ID: ${self:custom.otherfile.environment.${self:provider.stage}.LINEBOT_CHANNEL_ID}
       LIFF_URL: ${self:custom.otherfile.environment.${self:provider.stage}.LIFF_URL}
       STABLE_DIFFUSION_API_KEY: ${self:custom.otherfile.environment.${self:provider.stage}.STABLE_DIFFUSION_API_KEY}
+      LAMBDA_ARN: ${self:custom.otherfile.environment.${self:provider.stage}.LAMBDA_ARN}
+      LAMBDA_ROLE: ${self:custom.otherfile.environment.${self:provider.stage}.LAMBDA_ROLE}
       NOW_STAGE: ${self:custom.otherfile.environment.${self:provider.stage}.NOW_STAGE}
     runtime: nodejs16.x
     memorySize: 512
@@ -233,11 +240,27 @@ resources:
             AttributeType: N
           - AttributeName: createdAt
             AttributeType: N
+          - AttributeName: lineId
+            AttributeType: N
+          - AttributeName: providerType
+            AttributeType: N
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
         # GSの設定
         GlobalSecondaryIndexes:
+          - IndexName: lineId
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: providerType
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
           - IndexName: statusIndex
             KeySchema:
               - AttributeName: status
@@ -258,3 +281,34 @@ resources:
               ProjectionType: ALL # 射影される属性
         # オンデマンドモードを指定
         BillingMode: PAY_PER_REQUEST
+  #デプロイ時に編集
+  # NextAuthTable:
+  #   Type: 'AWS::DynamoDB::Table'
+  #   Properties:
+  #     TableName:
+  #     AttributeDefinitions:
+  #       - AttributeName: pk
+  #         AttributeType: S
+  #       - AttributeName: sk
+  #         AttributeType: S
+  #       - AttributeName: GSI1PK
+  #         AttributeType: S
+  #       - AttributeName: GSI1SK
+  #         AttributeType: S
+  #     KeySchema:
+  #       - AttributeName: pk
+  #         KeyType: HASH
+  #       - AttributeName: sk
+  #         KeyType: RANGE
+  #     GlobalSecondaryIndexes:
+  #       - IndexName: GSI1
+  #         Projection:
+  #           ProjectionType: ALL
+  #         KeySchema:
+  #           - AttributeName: GSI1PK
+  #             KeyType: HASH
+  #           - AttributeName: GSI1SK
+  #             KeyType: RANGE
+  #     TimeToLiveSpecification:
+  #       AttributeName: expires
+  #       Enabled: true

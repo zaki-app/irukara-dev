@@ -21,6 +21,7 @@ export async function updateImagesTable(
             Key: marshall({
               imageId,
             }),
+            ConditionExpression: 'attribute_exists(imageId)',
             UpdateExpression: `SET ${objKeys
               .map((_, index) => `#key${index} = :value${index}`)
               .join(', ')}`,
@@ -53,6 +54,20 @@ export async function updateImagesTable(
       data: updateParams,
     });
   } catch (err) {
+    if (
+      err.CancellationReasons &&
+      err.CancellationReasons[0].Code === 'ConditionalCheckFailed'
+    ) {
+      console.error('imageIdがテーブルに存在しない', err);
+      response = JSON.stringify({
+        statusCode: 400,
+        body: {
+          message: 'imageIdがImagesTableに存在しません',
+          errorMessage: err.message,
+          errorStack: err.stack,
+        },
+      });
+    }
     console.error('画像テーブル更新エラー', err);
     response = JSON.stringify({
       message: 'dynamodb以外でエラー',

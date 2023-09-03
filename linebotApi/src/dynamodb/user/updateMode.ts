@@ -16,6 +16,7 @@ export async function isUpdateMode(
           Update: {
             TableName: process.env.DYNAMODB_USER_TABLE_NAME,
             Key: marshall({ userId }),
+            ConditionExpression: 'attribute_exists(userId)',
             UpdateExpression: 'SET #md = :value1, updatedAt = :value2',
             ExpressionAttributeNames: {
               '#md': 'mode',

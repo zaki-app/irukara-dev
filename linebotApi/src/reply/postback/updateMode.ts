@@ -1,6 +1,6 @@
 import { TextMessage } from '@line/bot-sdk';
 import { isUpdateMode } from 'src/dynamodb';
-import { modeChangeReply } from 'src/line/quickReply/quickReply';
+import { createQuickReply } from 'src/line/quickReply/quickReply';
 
 export async function updateMode(
   hashUserId: string,
@@ -11,7 +11,7 @@ export async function updateMode(
   let quickItem;
   if (mode === 0) {
     textMessage = 'チャットモードになりました';
-    quickItem = modeChangeReply([
+    quickItem = createQuickReply([
       '使い方を教えて',
       'どんなことを手伝ってくれるの？',
       '今日のレシピの候補',
@@ -21,14 +21,14 @@ export async function updateMode(
   } else if (mode === 1) {
     textMessage =
       'イラストモードになりました。\n作りたい画像を入力してください';
-    quickItem = modeChangeReply([
+    quickItem = createQuickReply([
       '草食系のイケメン男子',
       '肉食系のイケメンスーツ男子',
       '白シャツ姿のOL',
     ]);
   } else if (mode === 2) {
     textMessage = 'リアルモードになりました。\n作りたい画像を入力してください';
-    quickItem = modeChangeReply([
+    quickItem = createQuickReply([
       '草食系のイケメン男子',
       '肉食系のイケメンスーツ男子',
       '白シャツ姿のOL',

@@ -13,6 +13,7 @@ export const updateUser = async (
   updateParams: UpdateUsersTable,
 ) => {
   console.log('updateの値', userId, updateParams);
+  let response;
   try {
     const client = DynamoClient();
     const objKeys = Object.keys(updateParams);
@@ -23,8 +24,9 @@ export const updateUser = async (
           Update: {
             TableName: process.env.DYNAMODB_USER_TABLE_NAME,
             Key: marshall({
-              userId: userId,
+              userId,
             }),
+            ConditionExpression: 'attribute_exists(userId)',
             UpdateExpression: `SET ${objKeys
               .map((_, index) => `#key${index} = :value${index}`)
               .join(', ')}`,
@@ -52,7 +54,7 @@ export const updateUser = async (
     const command = new TransactWriteItemsCommand(params);
     await client.send(command);
 
-    const response = JSON.stringify({
+    response = JSON.stringify({
       statusCode: 200,
       body: {
         data: updateParams,
@@ -64,14 +66,28 @@ export const updateUser = async (
 
     return response;
   } catch (err: any) {
-    const response = JSON.stringify({
-      statusCode: 500,
-      body: {
-        message: 'ユーザー情報の更新に失敗しました',
-        errorMessage: err.message,
-        errorStack: err.stack,
-      },
-    });
+    if (
+      err.CancellationReasons &&
+      err.CancellationReasons[0].Code === 'ConditionalCheckFailed'
+    ) {
+      response = JSON.stringify({
+        statusCode: 400,
+        body: {
+          message: 'userIdがUsersTableに存在しません',
+          errorMessage: err.message,
+          errorStack: err.stack,
+        },
+      });
+    } else {
+      response = JSON.stringify({
+        statusCode: 500,
+        body: {
+          message: 'ユーザー情報の更新に失敗しました',
+          errorMessage: err.message,
+          errorStack: err.stack,
+        },
+      });
+    }
 
     console.log('update userTable Failed...', response);
     return response;

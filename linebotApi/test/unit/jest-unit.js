@@ -14,5 +14,5 @@ module.exports = {
   // 除外するテスト
   testPathIgnorePatterns: ['/test/unit/example/'],
   // 環境変数
-  setupFiles: ['../../test/setup.js'],
+  // setupFiles: ['../../test/setup.js'],
 };
