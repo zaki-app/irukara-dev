@@ -25,10 +25,18 @@ export const registerUser = async (
     const client = DynamoClient();
 
     const selectMode = mode ? mode : 0;
-    const status = 1;
+    /**
+     * 初期status
+     * 0...無料、1...イルカモ、2...イルカラ、3...1から無料、
+     * 4...2から無料、5...イルカモからイルカラ、6...お試し中に解約
+     */
+    const status = 0;
 
     const params: UsersTable = {
       userId: userId,
+      lineId: userId,
+      registerMethod: 'linebot',
+      providerType: 'line',
       mode: selectMode,
       status: status,
       weekMsg: 0,
