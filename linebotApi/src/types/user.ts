@@ -1,6 +1,9 @@
 /* usersTable */
 export interface UsersTable {
   userId: string;
+  lineId: string;
+  registerMethod: string;
+  providerType: string;
   mode: number;
   status: number;
   weekMsg: number;

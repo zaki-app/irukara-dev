@@ -29,8 +29,8 @@ export async function getPastMessage(userId: string) {
 
   const items = Items.map((item) => unmarshall(item));
   const sortItems = lodash.orderBy(items, ['createdAt'], ['desc']);
-  // 上位4件に絞り込み
-  const limitItems = sortItems.slice(0, 4);
+  // 上位2件に絞り込み
+  const limitItems = sortItems.slice(0, 2);
   const sortAsc = lodash.orderBy(limitItems, ['createdAt'], ['asc']);
   const history = sortAsc.flatMap((item) => [
     {
