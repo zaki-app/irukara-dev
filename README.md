@@ -2,6 +2,9 @@
 
 Lambda と APIGateway で Nest.js を動かしています。
 
+有料プランは下記を参照
+https://www.notion.so/369a88cf3862432291ed630b59c5755f
+
 <br>
 
 ### 必要なもの

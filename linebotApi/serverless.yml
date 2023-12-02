@@ -339,13 +339,13 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性
-          - IndexName: StatusIndex
+          - IndexName: ProviderIndex
             KeySchema:
               - AttributeName: provider
                 KeyType: HASH
             Projection:
               ProjectionType: ALL # 射影される属性
-          - IndexName: PlanIndex
+          - IndexName: StatusIndex
             KeySchema:
               - AttributeName: status
                 KeyType: HASH
