@@ -290,123 +290,123 @@ resources:
         # オンデマンドモードを指定
         BillingMode: PAY_PER_REQUEST
     # irukara.netのユーザー
-    IrukaraUsersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.stage}-IrukaraUsersTable # DynamoDBテーブル名
-        AttributeDefinitions:
-          - AttributeName: id # PK
-            AttributeType: S
-          # GSI
-          - AttributeName: user_id
-            AttributeType: S
-          - AttributeName: name
-            AttributeType: S
-          - AttributeName: email
-            AttributeType: S
-          - AttributeName: provider
-            AttributeType: S
-          - AttributeName: status
-            AttributeType: N
-          - AttributeName: access_count
-            AttributeType: S
-          - AttributeName: sns
-            AttributeType: S
-          - AttributeName: source
-            AttributeType: S
-          - AttributeName: infraction_status
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        # GSIの設定
-        GlobalSecondaryIndexes:
-          - IndexName: UserIdIndex
-            KeySchema:
-              - AttributeName: user_id
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: NameIndex
-            KeySchema:
-              - AttributeName: name
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: EmailIndex
-            KeySchema:
-              - AttributeName: email
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: ProviderIndex
-            KeySchema:
-              - AttributeName: provider
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: StatusIndex
-            KeySchema:
-              - AttributeName: status
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: AccessCountIndex
-            KeySchema:
-              - AttributeName: access_count
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: SnsIndex
-            KeySchema:
-              - AttributeName: sns
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: SourceIndex
-            KeySchema:
-              - AttributeName: source
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-          - IndexName: InfractionStatus
-            KeySchema:
-              - AttributeName: infraction_status
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL # 射影される属性
-        # オンデマンドモードを指定
-        BillingMode: PAY_PER_REQUEST
-    #デプロイ時に編集
-    # NextAuthTable:
-    #   Type: 'AWS::DynamoDB::Table'
+    # IrukaraUsersTable:
+    #   Type: AWS::DynamoDB::Table
     #   Properties:
-    #     TableName: ${self:provider.stage}-AuthUserManagerTable
+    #     TableName: ${self:provider.stage}-IrukaraUsersTable # DynamoDBテーブル名
     #     AttributeDefinitions:
-    #       - AttributeName: pk
+    #       - AttributeName: id # PK
     #         AttributeType: S
-    #       - AttributeName: sk
+    #       # GSI
+    #       - AttributeName: user_id
     #         AttributeType: S
-    #       - AttributeName: GSI1PK
+    #       - AttributeName: name
     #         AttributeType: S
-    #       - AttributeName: GSI1SK
+    #       - AttributeName: email
+    #         AttributeType: S
+    #       - AttributeName: provider
+    #         AttributeType: S
+    #       - AttributeName: status
+    #         AttributeType: N
+    #       - AttributeName: access_count
+    #         AttributeType: S
+    #       - AttributeName: sns
+    #         AttributeType: S
+    #       - AttributeName: source
+    #         AttributeType: S
+    #       - AttributeName: infraction_status
     #         AttributeType: S
     #     KeySchema:
-    #       - AttributeName: pk
+    #       - AttributeName: id
     #         KeyType: HASH
-    #       - AttributeName: sk
-    #         KeyType: RANGE
+    #     # GSIの設定
     #     GlobalSecondaryIndexes:
-    #       - IndexName: GSI1
-    #         Projection:
-    #           ProjectionType: ALL
+    #       - IndexName: UserIdIndex
     #         KeySchema:
-    #           - AttributeName: GSI1PK
+    #           - AttributeName: user_id
     #             KeyType: HASH
-    #           - AttributeName: GSI1SK
-    #             KeyType: RANGE
-    #     TimeToLiveSpecification:
-    #       AttributeName: expires
-    #       Enabled: true
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: NameIndex
+    #         KeySchema:
+    #           - AttributeName: name
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: EmailIndex
+    #         KeySchema:
+    #           - AttributeName: email
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: ProviderIndex
+    #         KeySchema:
+    #           - AttributeName: provider
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: StatusIndex
+    #         KeySchema:
+    #           - AttributeName: status
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: AccessCountIndex
+    #         KeySchema:
+    #           - AttributeName: access_count
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: SnsIndex
+    #         KeySchema:
+    #           - AttributeName: sns
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: SourceIndex
+    #         KeySchema:
+    #           - AttributeName: source
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: InfractionStatus
+    #         KeySchema:
+    #           - AttributeName: infraction_status
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
     #     # オンデマンドモードを指定
     #     BillingMode: PAY_PER_REQUEST
+    #デプロイ時に編集
+    NextAuthTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.stage}-IrukaraAuth
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+          - AttributeName: GSI1PK
+            AttributeType: S
+          - AttributeName: GSI1SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: GSI1
+            Projection:
+              ProjectionType: ALL
+            KeySchema:
+              - AttributeName: GSI1PK
+                KeyType: HASH
+              - AttributeName: GSI1SK
+                KeyType: RANGE
+        TimeToLiveSpecification:
+          AttributeName: expires
+          Enabled: true
+        # オンデマンドモードを指定
+        BillingMode: PAY_PER_REQUEST
