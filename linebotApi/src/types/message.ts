@@ -10,6 +10,7 @@ export interface MessageTable {
   answer: string;
   referenceType: number;
   memberStatus: number;
+  requestType: string;
   createdAt: number;
 }
 
