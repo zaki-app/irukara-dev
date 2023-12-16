@@ -1,0 +1,358 @@
+service: irukara-db
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-northeast-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  # IAM
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Action:
+            - 'dynamodb:DescribeTable'
+            - 'dynamodb:Query'
+            - 'dynamodb:Scan'
+            - 'dynamodb:GetItem'
+            - 'dynamodb:PutItem'
+            - 'dynamodb:UpdateItem'
+            - 'dynamodb:DeleteItem'
+            - 'iam:PassRole'
+            - 'scheduler:CreateSchedule'
+            - 'states:StartExecution'
+          Resource:
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UsersTable
+            # MessagesTableのインデックス
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable/index/userIdIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable/index/referenceIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-MessagesTable/index/requestType
+            # ImagesTableのインデックス
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/userIdIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/shareStatusIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/referenceIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/modeIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/memberStatusIndex
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-ImagesTable/index/requestType
+            # UsersTableのインデックス
+            - arn:aws:dynamodb:ap-northeast-1:*:table/${self:provider.stage}-UsersTable/index/modeIndex
+            # scheduler
+            - '*'
+
+custom:
+  defaultStage: local
+
+# DynamoDBの作成
+resources:
+  Resources:
+    MessagesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.stage}-MessagesTable # DynamoDBテーブル名
+        AttributeDefinitions:
+          - AttributeName: messageId # PK
+            AttributeType: S
+          - AttributeName: createdAt # SK
+            AttributeType: N
+          # GS
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: shareStatus
+            AttributeType: N
+          - AttributeName: referenceType
+            AttributeType: N
+          - AttributeName: memberStatus
+            AttributeType: N
+          - AttributeName: requestType
+            AttributeType: S
+        KeySchema:
+          - AttributeName: messageId
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        # GSの設定
+        GlobalSecondaryIndexes:
+          - IndexName: userIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: shareStatusIndex
+            KeySchema:
+              - AttributeName: shareStatus
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: referenceIndex
+            KeySchema:
+              - AttributeName: referenceType
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: memberStatusIndex
+            KeySchema:
+              - AttributeName: memberStatus
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: requestTypeIndex
+            KeySchema:
+              - AttributeName: requestType
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+        # オンデマンドモードを指定
+        BillingMode: PAY_PER_REQUEST
+    ImagesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.stage}-ImagesTable # DynamoDBテーブル名
+        AttributeDefinitions:
+          - AttributeName: imageId # PK
+            AttributeType: S
+          # GS
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: shareStatus
+            AttributeType: N
+          - AttributeName: referenceType
+            AttributeType: N
+          - AttributeName: mode
+            AttributeType: N
+          - AttributeName: memberStatus
+            AttributeType: N
+          - AttributeName: requestType
+            AttributeType: S
+        KeySchema:
+          - AttributeName: imageId
+            KeyType: HASH
+        # GSの設定
+        GlobalSecondaryIndexes:
+          - IndexName: userIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: shareStatusIndex
+            KeySchema:
+              - AttributeName: shareStatus
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: referenceIndex
+            KeySchema:
+              - AttributeName: referenceType
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: modeIndex
+            KeySchema:
+              - AttributeName: mode
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: memberStatusIndex
+            KeySchema:
+              - AttributeName: memberStatus
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: requestTypeIndex
+            KeySchema:
+              - AttributeName: requestType
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+        # オンデマンドモードを指定
+        BillingMode: PAY_PER_REQUEST
+    # ユーザーテーブル
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.stage}-UsersTable # DynamoDBテーブル名
+        AttributeDefinitions:
+          - AttributeName: userId # PK
+            AttributeType: S
+          # GSI
+          - AttributeName: status
+            AttributeType: N
+          - AttributeName: mode
+            AttributeType: N
+          - AttributeName: createdAt
+            AttributeType: N
+          - AttributeName: lineId
+            AttributeType: S
+          - AttributeName: providerType
+            AttributeType: S
+          - AttributeName: registerMethod
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        # GSIの設定
+        GlobalSecondaryIndexes:
+          - IndexName: lineIdIndex
+            KeySchema:
+              - AttributeName: lineId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: RegisterMethodIndex
+            KeySchema:
+              - AttributeName: registerMethod
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: providerTypeIndex
+            KeySchema:
+              - AttributeName: providerType
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: statusIndex
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: modeIndex
+            KeySchema:
+              - AttributeName: mode
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+          - IndexName: createdAtIndex
+            KeySchema:
+              - AttributeName: createdAt
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL # 射影される属性
+        # オンデマンドモードを指定
+        BillingMode: PAY_PER_REQUEST
+    # irukara.netのユーザー
+    # IrukaraUsersTable:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     TableName: ${self:provider.stage}-IrukaraUsersTable # DynamoDBテーブル名
+    #     AttributeDefinitions:
+    #       - AttributeName: id # PK
+    #         AttributeType: S
+    #       # GSI
+    #       - AttributeName: user_id
+    #         AttributeType: S
+    #       - AttributeName: name
+    #         AttributeType: S
+    #       - AttributeName: email
+    #         AttributeType: S
+    #       - AttributeName: provider
+    #         AttributeType: S
+    #       - AttributeName: status
+    #         AttributeType: N
+    #       - AttributeName: access_count
+    #         AttributeType: S
+    #       - AttributeName: sns
+    #         AttributeType: S
+    #       - AttributeName: source
+    #         AttributeType: S
+    #       - AttributeName: infraction_status
+    #         AttributeType: S
+    #     KeySchema:
+    #       - AttributeName: id
+    #         KeyType: HASH
+    #     # GSIの設定
+    #     GlobalSecondaryIndexes:
+    #       - IndexName: UserIdIndex
+    #         KeySchema:
+    #           - AttributeName: user_id
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: NameIndex
+    #         KeySchema:
+    #           - AttributeName: name
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: EmailIndex
+    #         KeySchema:
+    #           - AttributeName: email
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: ProviderIndex
+    #         KeySchema:
+    #           - AttributeName: provider
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: StatusIndex
+    #         KeySchema:
+    #           - AttributeName: status
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: AccessCountIndex
+    #         KeySchema:
+    #           - AttributeName: access_count
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: SnsIndex
+    #         KeySchema:
+    #           - AttributeName: sns
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: SourceIndex
+    #         KeySchema:
+    #           - AttributeName: source
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #       - IndexName: InfractionStatus
+    #         KeySchema:
+    #           - AttributeName: infraction_status
+    #             KeyType: HASH
+    #         Projection:
+    #           ProjectionType: ALL # 射影される属性
+    #     # オンデマンドモードを指定
+    #     BillingMode: PAY_PER_REQUEST
+    #デプロイ時に編集
+    NextAuthTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.stage}-IrukaraAuth
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+          - AttributeName: GSI1PK
+            AttributeType: S
+          - AttributeName: GSI1SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: GSI1
+            Projection:
+              ProjectionType: ALL
+            KeySchema:
+              - AttributeName: GSI1PK
+                KeyType: HASH
+              - AttributeName: GSI1SK
+                KeyType: RANGE
+        TimeToLiveSpecification:
+          AttributeName: expires
+          Enabled: true
+        # オンデマンドモードを指定
+        BillingMode: PAY_PER_REQUEST

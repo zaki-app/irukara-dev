@@ -31,7 +31,7 @@ export async function saveMessage(
       answer: replayText,
       referenceType: 0,
       memberStatus: 0,
-      requestType: 'line',
+      requestType: 'linebot',
       createdAt: jpDayjs().unix(),
     };
 

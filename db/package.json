@@ -1,0 +1,14 @@
+{
+    "name": "db",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "deploy:dev": "serverless deploy --stage dev --aws-profile irukara-dev --verbose",
+        "deploy:stg": "serverless deploy --stage stg --aws-profile irukara-dev --verbose",
+        "deploy:prd": "serverless deploy --stage prd --aws-profile irukara-dev --verbose"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}
