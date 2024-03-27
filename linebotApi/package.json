@@ -28,13 +28,11 @@
     "url": "npx lt --port 6000 --subdomain dev-irukara-chat-bot-by-yozakura --print-requests",
     "urls": "nest build --webpack && ngrok http 6000",
     "deploy:dev": "nest build --webpack && serverless deploy --stage dev --aws-profile irukara-dev --verbose",
-    "deploy:stg": "nest build --webpack && serverless deploy --stage staging --aws-profile irukara-dev --verbose",
+    "deploy:stg": "nest build --webpack && serverless deploy --stage stg --aws-profile irukara-dev --verbose",
     "deploy:prd": "nest build --webpack && serverless deploy --stage prd --aws-profile irukara-dev --verbose",
     "cfn-lint": "cfn-lint serverless.yml",
-    "req": "curl https://dev-tap-note-chat-bot-by-yozakura.loca.lt/linebot",
-    "req-stg": "curl https://0nksas0pr4.execute-api.ap-northeast-1.amazonaws.com/linebot",
     "sls-remove-deploy-dev": "serverless remove --verbose -s dev --aws-profile irukara-dev",
-    "sls-remove-deploy-stg": "serverless remove --verbose -s staging --aws-profile irukara-dev"
+    "sls-remove-deploy-stg": "serverless remove --verbose -s stg --aws-profile irukara-dev"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.303.0",
